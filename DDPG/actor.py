@@ -12,6 +12,7 @@ from keras.utils import to_categorical
 
 
 class Actor:
+    
     """ Actor for DDPG """
     
     def __init__(self,input_dim, output_dim,lr):
@@ -21,6 +22,7 @@ class Actor:
         self.model = self._make_network()
         self.target_model = self._make_network()                # target networks to stabilize learning.
         self.target_model.set_weights(self.model.get_weights()) # clone the networks
+        self.adam_optimizer = self.optimizer()
         
         
     def _make_network(self):
@@ -33,43 +35,26 @@ class Actor:
         return model
     
     
+    def learn(self,states,grad_actions):
+        self.adam_optimizer([states,grad_actions]) 
+    
+    
     def optimizer(self):
-        """ The actor loss: mean_t ( log(pi(s_t,a_t)) * A_t ), 
+        """ Loss = grad_(theta) \mu(s)  grad_(actions) Q(s,a)
         
-            where A_t = advantage,  A_t = G_t - Q(s_t, a_t) 
-          
-            where Q(s,a) = Q-value, output of critic 
-            and G_t = (empirical) discounted return at time t
-        
-            Following (Cf. https://arxiv.org/abs/1602.01783), we add an entropy
-            term to the loss, to encourage exploration. 
+            where
+            s = state
+            a = action
+            \mu_(\theta)(s) = the deterministic policy (actor)
+            Q(s,a) = the Q-value, from the critic
         """
         
-        #Place holders (think of these as function inputs)
-        state_placeholder = self.model.input
-        all_probs_placeholder = self.model.output
-        actions_onehot_placeholder = K.placeholder(name='actions_onehot',shape=(None,self.output_dim))
-        advantage_placeholder = K.placeholder(name='discounted_return',shape=(None,))
+        # taken from https://github.com/germain-hug/Deep-RL-Keras/blob/master/DDPG/actor.py
+        # I believe this is a work around to get keras to learn _given a gradient_
+        # As opposed to bunch of x_train, y_trains?
         
-        #Find log-probs
-        action_probs = K.sum(actions_onehot_placeholder*all_probs_placeholder ,axis=1)  #get prob for 
-        log_probs = K.log(action_probs)                                                 #specific action
-        
-        #I want to the gradient to by on the log(pi) only, so 'protect' the advantage
-        # This is the way keras works -- I think!
-        eligibility = log_probs*K.stop_gradient(advantage_placeholder)
-        
-        #Add in entropy -- see (Cf. https://arxiv.org/abs/1602.01783)
-        entropy = K.sum(self.model.output * K.log(self.model.output + 1e-10), axis=1)
-
-
-        loss = 0.001*entropy - K.mean(eligibility)
-        
-        #Define optimizer
-        adam = Adam()
-        pars = self.model.trainable_weights
-        updates = adam.get_updates(params=pars,constraints=[],loss=loss)
-    
-        #Then return
-        return K.function([state_placeholder, actions_onehot_placeholder, advantage_placeholder],[],
-                          updates=updates)
+        grad_actions = K.placeholder(shape=(None,self.output_dim))
+        grad_pars = tf.gradients(self.model.output,self.model.trainable_weights, -grad_actions)
+        grads = zip(grad_pars, self.model.trainable_weights)
+        return K.function([self.model.input, grad_actions], [tf.train.AdamOptimizer(self.lr).apply_gradients(grads)])
+      

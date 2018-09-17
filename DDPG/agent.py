@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import random
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam 
@@ -22,45 +23,44 @@ class Agent:
         self.gamma = gamma
         self.tau = 0.1
         
-        #These will store the samples from which the agent will learn
-        self.states = []
-        self.action_samples = []
-        self.rewards = []
+        #For experience replay
+        self.memory = []
+        self.memory_size = 10000
+        self.batchsize = 32 
         
-        #Make actor and critic
+        #Actor & critic
         self.actor = Actor(input_dim,output_dim,self.lr)
         self.critic = Critic(input_dim,output_dim, self.lr)
+                
         
-        self.train_actor = self.actor.optimizer()
-        self.train_critic = self.critic.optimizer()
+    def extract_from_batch(self,batch):
+        states, actions = [], []
+        for event in batch:
+            state,action,reward,next_state,done = event
+            states.append(state)
+            actions.append(action)
+        return np.array(states), np.array(actions)
             
     
     def train_models(self):
         
-        #Turn lists into arrays
-        self.states = np.array(self.states)
-        self.action_samples = np.array(self.action_samples)
-        self.rewards = np.array(self.rewards)
         
-        #Compute inputs for the optimizers
-        discounted_return = self.find_discounted_return(self.rewards)
-        Q_values = self.critic.model.predict(self.states)
-        Q_values.resize(len(values))
-        advantages = discounted_return - Q_values
+        #Do experience replay
+        if len(self.memory) < self.batchsize:
+            minibatch = self.memory
+        else:
+            minibatch = random.sample(self.memory,self.batchsize)
+            
+            
+        #Actor update
+        states, actions = self.extract_from_batch(minibatch)
+        grad_actions = self.critic.action_gradients(states,actions) 
+        self.actor.learn(states,grad_actions)
+        self.soft_update_target_network(actor)
         
-        #Do the training
-        self.train_actor([self.states,self.action_samples,advantages])
-        self.train_critic([self.states,discounted_return])
-        
-        #Update the target networks
-        self.soft_update_target_network(self.actor)
-        self.soft_update_target_network(self.critic)
-                
-        #Erase memory
-        self.states = []
-        self.action_samples = []
-        self.rewards = []
-        
+        #Critic update
+        self.critic.learn(minibatch)
+        self.soft_update_target_network(critic)
         
         
     def soft_update_target_network(self,net):
@@ -100,15 +100,15 @@ class Agent:
     
         
     
-    def remember(self, state, action, reward):
-        self.states.append(state)
-        
-        action_onehot = to_categorical(action,self.output_dim) #optimizers use one-hot
-        self.action_samples.append(action_onehot) 
-        
-        self.rewards.append(reward)
-        
+    def remember(self, state, action, reward, next_state, done):
+        event = (state,action,reward, next_state, done)
+        if len(self.memory) <= self.memory_size:
+            self.memory.append(event)
+        else:
+            self.memory[0] = event
+            
+            
 
     def act(self, state):        
         action =  self.actor.model.predict(state)[0]
-        return action[0][0]
+        return action
