@@ -1,0 +1,2 @@
+This is my playing with policy gradients on a few of OpenAI's enviroments. I'm using keras for
+the neural nets.

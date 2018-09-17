@@ -1,0 +1,4 @@
+Here I'm testing the A2C algorithm on the taxi game: where a taxi is moving on a street network, and
+has to minimize his idle time (time spent empty).
+
+
