@@ -26,6 +26,7 @@ class Actor:
         
         
     def _make_network(self):
+        
         # Neural Net
         model = Sequential()
         model.add(Dense(10, input_dim=self.input_dim, activation='relu'))
@@ -50,11 +51,21 @@ class Actor:
         """
         
         # taken from https://github.com/germain-hug/Deep-RL-Keras/blob/master/DDPG/actor.py
-        # I believe this is a work around to get keras to learn _given a gradient_
+        # I believe this is a work around to get keras to learn **given a gradient**
         # As opposed to bunch of x_train, y_trains?
         
-        grad_actions = K.placeholder(shape=(None,self.output_dim))
-        grad_pars = tf.gradients(self.model.output,self.model.trainable_weights, -grad_actions)
-        grads = zip(grad_pars, self.model.trainable_weights)
-        return K.function([self.model.input, grad_actions], [tf.train.AdamOptimizer(self.lr).apply_gradients(grads)])
+        #Inputs
+        state_pl = self.model.input
+        action_grads_pl = K.placeholder(shape=(None,1))  
+                                        
+        #Find grad_(pars) mu(state)
+        mu_pl = self.model.output
+        pars = self.model.trainable_weights
+        pars_grad_mu = tf.gradients(mu_pl, pars, -action_grads_pl)
+        grads = zip(pars_grad_mu, pars)  #keras needs this form
+                                        
+        #Then do the learning: apply the gradient
+        updates = tf.train.AdamOptimizer(self.lr).apply_gradients(grads)
+
+        return K.function(inputs = [state_pl, action_grads_pl], outputs = [updates])
       

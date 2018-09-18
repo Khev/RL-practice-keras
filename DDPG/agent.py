@@ -30,7 +30,20 @@ class Agent:
         
         #Actor & critic
         self.actor = Actor(input_dim,output_dim,self.lr)
-        self.critic = Critic(input_dim,output_dim, self.lr)
+        self.critic = Critic(input_dim,output_dim, self.lr, self.gamma)
+        
+        
+    def remember(self, state, action, reward, next_state, done):
+        event = (state,action,reward, next_state, done)
+        if len(self.memory) <= self.memory_size:
+            self.memory.append(event)
+        else:
+            self.memory[0] = event
+         
+
+    def act(self, state):        
+        action =  self.actor.model.predict(state)[0]
+        return action
                 
         
     def extract_from_batch(self,batch):
@@ -43,8 +56,7 @@ class Agent:
             
     
     def train_models(self):
-        
-        
+       
         #Do experience replay
         if len(self.memory) < self.batchsize:
             minibatch = self.memory
@@ -54,13 +66,13 @@ class Agent:
             
         #Actor update
         states, actions = self.extract_from_batch(minibatch)
-        grad_actions = self.critic.action_gradients(states,actions) 
+        grad_actions = self.critic.find_action_grads([states,actions])[0]
         self.actor.learn(states,grad_actions)
-        self.soft_update_target_network(actor)
+        self.soft_update_target_network(self.actor)
         
         #Critic update
         self.critic.learn(minibatch)
-        self.soft_update_target_network(critic)
+        self.soft_update_target_network(self.critic)
         
         
     def soft_update_target_network(self,net):
@@ -83,32 +95,5 @@ class Agent:
             ctr += 1
 
         net.target_model.set_weights(pars_target)
-                
-        
-    def find_discounted_return(self,rewards):
-        R = np.zeros_like(rewards)
-        rolling_sum = 0
-        for t in reversed(range(len(R))):
-            rolling_sum = rolling_sum*self.gamma + rewards[t]
-            R[t] = rolling_sum
-            
-        #Normalize rewards
-        R -= np.mean(R)
-        R /= np.std(R)
-            
-        return np.array(R)
-    
-        
-    
-    def remember(self, state, action, reward, next_state, done):
-        event = (state,action,reward, next_state, done)
-        if len(self.memory) <= self.memory_size:
-            self.memory.append(event)
-        else:
-            self.memory[0] = event
-            
-            
+                 
 
-    def act(self, state):        
-        action =  self.actor.model.predict(state)[0]
-        return action
