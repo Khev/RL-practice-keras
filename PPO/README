@@ -1,3 +1,5 @@
+NOT YET DONE!!
+
 Here I will implement the Proximal Policy gradient method (see link below for original paper).
 This is an improvement on regular (including A2C) policy gradient methods. The basic idea is to
 use a different loss function. 

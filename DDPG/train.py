@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import gym
 from agent import Agent
 from keras.utils import to_categorical
-%matplotlib inline
 
 
 #Environment

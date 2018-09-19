@@ -4,6 +4,8 @@ from keras.initializers import RandomUniform
 from keras.models import Sequential, Model
 from keras.layers import Input, Dense, Reshape, LSTM, Lambda, BatchNormalization, GaussianNoise, Flatten
 from keras import backend as K
+from keras.optimizers import Adam 
+
 
 
 class Actor:
@@ -75,10 +77,17 @@ class Actor:
         mu_pl = self.model.output
         pars = self.model.trainable_weights
         pars_grad_mu = tf.gradients(mu_pl, pars, -action_grads_pl)
-        grads_and_pars = zip(pars_grad_mu, pars)  #keras needs this form
-                                        
-        #Then do the learning: apply the gradient
-        updates = tf.train.AdamOptimizer(self.lr).apply_gradients(grads_and_pars)
+        
+        #grads_and_pars = zip(pars_grad_mu, pars)  #keras needs this form
+        #updates = tf.train.AdamOptimizer(self.lr).apply_gradients(grads_and_pars)
 
-        return K.function(inputs = [state_pl, action_grads_pl], outputs = [updates])
+        #The gradients as defined above work on my mac, but not ubuntu.
+        #Below I am trying a workaround
+        
+        opt = Adam(self.lr)
+        loss = pars_grad_mu  #placeholder, I won't use it
+        updates = opt.get_updates(loss = loss, params = pars, grads = pars_grad_mu)
+
+        return K.function(inputs = [state_pl, action_grads_pl], outputs = [], updates = updates)
+        #return K.function(inputs = [state_pl, action_grads_pl], outputs = [updates])
       
