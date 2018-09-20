@@ -23,9 +23,7 @@ class Critic:
         self.model = self._make_network()
         self.target_model = self._make_network()    #we have target networks to stabilize learning.
         pars = self.model.get_weights()
-        self.target_model.set_weights(pars)         #clone the networks
-        
-        #Make the gradient function
+        self.target_model.set_weights(pars)         #clone the network
         self.find_action_grads = self._make_gradient_function()
        
              
@@ -67,8 +65,12 @@ class Critic:
         
         """ The critic target is just the usual 
         
-            Q(s_t,a_t) = r_t + \gamma* max_(a) Q(s'_t, a'_t)   (I'll call the RHS Q_want)
+            Q(s_t,a_t) = r_t + \gamma* max_(a) Q(s'_t, a'_t)   for s' non-terminal
+            Q(s_t, a_t) = r_t                                  for s' terminal
             
+            (I'll call the RHS Q_want)
+            
+      
             Input: batch = [(s,a,r,s',done), ...]
             
         """
@@ -94,8 +96,5 @@ class Critic:
         #Dont' think (hope) it makes much difference
         states = np.array(states)
         actions = np.array(actions)
-        Q_wants = np.array(Q_wants)
-        
-        #print states.shape, actions.shape, Q_wants.shape
-        
+        Q_wants = np.array(Q_wants)        
         self.model.train_on_batch([states, actions],Q_wants)

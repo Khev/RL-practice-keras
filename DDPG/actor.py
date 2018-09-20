@@ -21,20 +21,9 @@ class Actor:
         self.target_model = self._make_network()                # target networks to stabilize learning.
         self.target_model.set_weights(self.model.get_weights()) # clone the networks
         self.adam_optimizer = self.optimizer()
-        
-    """    
-    def _make_network(self):
-        
-        # Neural Net
-        model = Sequential()
-        model.add(Dense(10, input_dim=self.input_dim, activation='relu'))
-        model.add(Dense(10, activation='relu'))
-        model.add(Dense(10, activation='relu'))
-        model.add(Dense(1, activation='softmax'))  #recall, deterministic policy, so only 1 output
-        return model
-    """
+
        
-    #Adapted from https://github.com/germain-hug/Deep-RL-Keras/blob/master/DDPG/actor.py
+    #Taken from https://github.com/germain-hug/Deep-RL-Keras/blob/master/DDPG/actor.py
     def _make_network(self):
         """ Actor Network for Policy function Approximation, using a tanh
         activation for continuous control. We add parameter noise to encourage
@@ -42,10 +31,10 @@ class Actor:
         """
         inp = Input(shape = (self.input_dim,))
         x = Dense(256, activation='relu')(inp)
-        #x = GaussianNoise(1.0)(x)
+        x = GaussianNoise(1.0)(x)
         #x = Flatten()(x)   # I assume this is if the input is a convolutional neural net?
         x = Dense(128, activation='relu')(x)
-        #x = GaussianNoise(1.0)(x)
+        x = GaussianNoise(1.0)(x)
         out = Dense(self.output_dim, activation='tanh', kernel_initializer=RandomUniform())(x)
         out = Lambda(lambda i: i * self.act_range)(out)
         return Model(inp, out)
@@ -81,8 +70,10 @@ class Actor:
         #grads_and_pars = zip(pars_grad_mu, pars)  #keras needs this form
         #updates = tf.train.AdamOptimizer(self.lr).apply_gradients(grads_and_pars)
 
-        #The gradients as defined above work on my mac, but not ubuntu.
-        #Below I am trying a workaround
+        # The gradients as defined above work on my mac, but not ubuntu.
+        # Below I am trying a workaround. I changed the keras source code 
+        # To get this working. Specifically, I make the optimizer.get_updates()
+        # function accept custom gradients. It was easy to do.
         
         opt = Adam(self.lr)
         loss = pars_grad_mu  #placeholder, I won't use it
