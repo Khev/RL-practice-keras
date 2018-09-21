@@ -5,6 +5,7 @@ from keras.models import Sequential, Model
 from keras.layers import Input, Dense, Reshape, LSTM, Lambda, BatchNormalization, GaussianNoise, Flatten
 from keras import backend as K
 from keras.optimizers import Adam 
+from functools import partial
 
 
 
@@ -29,14 +30,49 @@ class Actor:
         activation for continuous control. We add parameter noise to encourage
         exploration, and balance it with Layer Normalization.
         """
+        
+        #Placeholders
+        init = tf.contrib.layers.variance_scaling_initializer()
+        reg = tf.contrib.layers.l2_regularizer(0.1)
+        
+        #Main net
+        inp = Input(shape = (self.input_dim,))
+        x = Dense(32, activation='elu', kernel_initializer=init, kernel_regularizer=reg)(inp)
+        #x = GaussianNoise(5.0)(x)
+        #x = Flatten()(x)   # I assume this is if the input is a convolutional neural net?
+        x = Dense(64, activation='elu', kernel_initializer=init, kernel_regularizer=reg )(x)
+        #x = GaussianNoise(5.0)(x)
+        out = Dense(self.output_dim, activation='elu',kernel_initializer=init,kernel_regularizer=reg)(x)
+        #out = Lambda(lambda i: i * self.act_range)(out)
+        
+        # Taken from https://github.com/lirnli/OpenAI-gym-    solutions/blob/master/Continuous_Deep_Deterministic_Policy_Gradient_Net/DDPG%20Class%20ver2.ipynb
+        """
+        activation = tf.nn.elu
+        kernel_initializer = tf.contrib.layers.variance_scaling_initializer()
+        kernel_regularizer = tf.contrib.layers.l2_regularizer(0.1)
+        default_dense = partial(tf.layers.dense,\
+                                activation=activation,\
+                                kernel_initializer=kernel_initializer,\
+                                kernel_regularizer=kernel_regularizer)
+        
+        inp = Input(shape= (self.input_dim,))
+        x = default_dense(inp,32)
+        x = default_dense(x,64)
+        out = default_dense(x,self.output_dim)
+        """
+        
+        #Taken from https://github.com/germain-hug/Deep-RL-Keras/blob/master/DDPG/actor.py
+        """
         inp = Input(shape = (self.input_dim,))
         x = Dense(256, activation='relu')(inp)
-        x = GaussianNoise(1.0)(x)
+        #x = GaussianNoise(5.0)(x)
         #x = Flatten()(x)   # I assume this is if the input is a convolutional neural net?
         x = Dense(128, activation='relu')(x)
-        x = GaussianNoise(1.0)(x)
+        #x = GaussianNoise(5.0)(x)
         out = Dense(self.output_dim, activation='tanh', kernel_initializer=RandomUniform())(x)
         out = Lambda(lambda i: i * self.act_range)(out)
+        """
+        
         return Model(inp, out)
     
     
@@ -67,18 +103,18 @@ class Actor:
         pars = self.model.trainable_weights
         pars_grad_mu = tf.gradients(mu_pl, pars, -action_grads_pl)
         
-        #grads_and_pars = zip(pars_grad_mu, pars)  #keras needs this form
-        #updates = tf.train.AdamOptimizer(self.lr).apply_gradients(grads_and_pars)
+        grads_and_pars = zip(pars_grad_mu, pars)  #keras needs this form
+        updates = tf.train.AdamOptimizer(self.lr).apply_gradients(grads_and_pars)
 
         # The gradients as defined above work on my mac, but not ubuntu.
         # Below I am trying a workaround. I changed the keras source code 
         # To get this working. Specifically, I make the optimizer.get_updates()
         # function accept custom gradients. It was easy to do.
         
-        opt = Adam(self.lr)
-        loss = pars_grad_mu  #placeholder, I won't use it
-        updates = opt.get_updates(loss = loss, params = pars, grads = pars_grad_mu)
+        #opt = Adam(self.lr)
+        #loss = pars_grad_mu  #placeholder, I won't use it
+        #updates = opt.get_updates(loss = loss, params = pars, grads = pars_grad_mu)
 
-        return K.function(inputs = [state_pl, action_grads_pl], outputs = [], updates = updates)
-        #return K.function(inputs = [state_pl, action_grads_pl], outputs = [updates])
+        #return K.function(inputs = [state_pl, action_grads_pl], outputs = [], updates = updates)
+        return K.function(inputs = [state_pl, action_grads_pl], outputs = [updates])
       

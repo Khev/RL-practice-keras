@@ -1,1 +1,14 @@
-None of these files have been updated yet
+NOTES
+1. I haven't been able to get the same code working on mac and ubuntu.
+2. So for now, I comment out different code blocks in 'actor.py'
+3. Must fix this soon.
+
+
+LOG
+1. I believe I have the code working correctly.
+2. But solving the enviroment (continuous mountaincar) is hard!
+3. I want to solve it before moving on, so that I'm sure my code works.
+4. So, I'm doing a hyperparameter search.
+5. I should really test the other environments -- like inverted pendulum -- as
+well.
+6. Or indeed, my clever oscillators :-)

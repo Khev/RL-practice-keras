@@ -1,3 +1,9 @@
+### I believe I have to really enhance the exploration
+### at the start to get good results. These are controlled
+### By batchsize, warm-up, and noise strength. So I will
+### Vary these
+
+
 import gym
 import time
 import numpy as np
@@ -14,10 +20,12 @@ def noisy_action(action):
     return noisy_action
 
 
-def train():
+def train(pars):
     """ There are other hyperparameters, but I'll just 
         look at these for now.
     """
+    
+    batchsize, warmup, memory_size = pars
     
     #Environment
     env = gym.make('MountainCarContinuous-v0')
@@ -26,17 +34,17 @@ def train():
     num_actions = env.action_space.shape[0]
 
     #Agent
-    lr = 0.01
+    lr = 0.001
     gamma = 0.99
     agent = Agent(num_states, num_actions, lr, gamma)
-    agent.memory_size = 10**4
-    agent.batchsize = 256
-    learning_start = 3*agent.batchsize
+    agent.memory_size = memory_size
+    agent.batchsize = batchsize
+    learning_start = warmup
     agent.tau = 0.001
     
     #Train
-    EPISODES = 30
-    MAX_STEPS = 500
+    EPISODES = 100
+    MAX_STEPS = 1000
     scores = []
     t1 = time.time()
     for e in range(1,EPISODES+1):
@@ -74,23 +82,38 @@ def train():
         scores.append(reward_sum)
         t2 = time.time()
         x_max, x_min = np.round(x_max,2), np.round(x_min, 2)
-        if e % 1 == 0:
-            print '(episode, score, steps, T (mins)) = ' +str((e,int(reward_sum),steps,int((t2-t1)/60.0)))
-            print("x_max = %.2f" % round(x_max,2))
-            print("x_min = %.2f" % round(x_min,2))
-            print("amplitude = %.2f" % round(x_max-x_min,2))
-            print '\n'
+   
+        #print("x_max = %.2f" % round(x_max,2))
+        #print("x_min = %.2f" % round(x_min,2))
+        #print("amplitude = %.2f" % round(x_max-x_min,2))
+        #print '\n'
 
         
     #Print results
     #I'll assess performace as the mean of the last 100 episodes
     cutoff = EPISODES / 2
-    print '(gamma, lr, tau, score) = ' + str((gamma, lr, tau, np.mean(scores[cutoff:])))
+    string =  '(batchsize, warmup, memory_size, mean_score) = ' + str((batchsize,warmup,memory_size,
+                                                             np.mean(scores[cutoff:])))
     t2 = time.time()
-    print 'took ' + str( (t2-t1)/60.0 ) + ' mins \n'
+    #print string
+    #print 'took ' + str( (t2-t1)/60.0 ) + ' mins \n'
+    return string
     
     
     
 ################################### Main hyperparameter loop ##############################################################
 
-train()
+batches = [10,100,500]
+warmups = [10**2, 10**3]
+memory_sizes = [10**4,10**5,10**6]
+pars = [(b,w,m) for b in batches for w in warmups for m in memory_sizes]
+print len(pars)
+
+from multiprocessing import Pool
+workers = Pool(6)
+results = workers.map(train,pars)
+
+for result in results:
+    print result
+    
+np.savetxt('hyperpar_search.txt',results,fmt='%s')
