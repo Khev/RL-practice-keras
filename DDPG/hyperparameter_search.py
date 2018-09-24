@@ -112,6 +112,8 @@ print len(pars)
 from multiprocessing import Pool
 workers = Pool(6)
 results = workers.map(train,pars)
+workers.close()
+workers.join()
 
 for result in results:
     print result
