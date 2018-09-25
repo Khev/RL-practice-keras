@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 from agent import Agent
 
 
-def train(lr,gamma,tau):
+def train(par):
     """ There are other hyperparameters, but I'll just 
         look at these for now.
     """
 
+    gamma,lr,tau = par
 
     #Environment
     env = gym.make('MountainCarContinuous-v0')
@@ -57,21 +58,39 @@ def train(lr,gamma,tau):
     #Print results
     #I'll assess performace as the mean of the last 100 episodes
     cutoff = EPISODES / 2
-    print '(gamma, lr, tau, score) = ' + str((gamma, lr, tau, np.mean(scores[cutoff:])))
+    string =  '(gamma, lr, tau, score) = ' + str((gamma, lr, tau, np.mean(scores[cutoff:])))
     t2 = time.time()
+    print string
     print 'took ' + str( (t2-t1)/60.0 ) + ' mins \n'
     
-    
+    #save figure
+    plt.figure(figsize=(9,6))
+    plt.plot(scores)
+    plt.xlabel('episode', fontsize=18)
+    plt.ylabel('score', fontsize=18)
+    plt.title('(gamma,lr,tau) = ' + str((gamma,lr,tau)))
+    filename = 'stats/gamma_' + str(gamma) + '_lr_' + str(lr) + '_tau_' + str(tau) +  '.png'
+    plt.savefig(filename)
+   
+
+    return string
     
 ################################### Main hyperparameter loop ##############################################################
 
 
-gammas = [0.1,0.5,0.99]
-lrs = [0.0001, 0.001, 0.01, 0.1, 1]
-taus = [0.0001, 0.001, 0.01, 0.1, 1]
+#par = (0.1, 0.001, 0.01)
+#train(par)
 
-for gamma in gammas:
-    for lr in lrs:
-        for tau in taus:
-            train(lr,gamma,tau)
-    
+
+gammas = [0.1,0.99]
+lrs = [0.0001, 0.001, 0.01]
+taus = [0.001, 0.01, 0.1]
+pars = [(g,lr,tau) for g in gammas for lr in lrs for tau in taus ]
+
+print len(pars)
+
+from multiprocessing import Pool
+workers = Pool(6)
+results = workers.map(train,pars)
+np.savetxt('stats/hyperpar_results.txt',results,fmt="%s")
+

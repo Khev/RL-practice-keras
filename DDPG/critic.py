@@ -65,7 +65,7 @@ class Critic:
         
         """ The critic target is just the usual 
         
-            Q(s_t,a_t) = r_t + \gamma* max_(a) Q(s'_t, a'_t)   for s' non-terminal
+            Q(s_t,a_t) = r_t + \gamma*  Q_target(s'_t, a'_t)   for s' non-terminal
             Q(s_t, a_t) = r_t                                  for s' terminal
             
             (I'll call the RHS Q_want)
@@ -87,8 +87,8 @@ class Critic:
                 Q_want = reward
             else:
                 state_tensor, action_tensor = np.reshape(state,(1,len(state))), np.reshape(action,(1,len(action)))
-                Q_next = self.model.predict([state_tensor,action_tensor])[0]
-                Q_want = reward + self.gamma*Q_next
+                Q_target_next = self.target_model.predict([state_tensor,action_tensor])[0]   
+                Q_want = reward + self.gamma*Q_target_next
             Q_wants.append(Q_want)
            
         
