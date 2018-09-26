@@ -1,3 +1,8 @@
+# Here I'm running an ensemble of trainings at a specific parameter instance.
+# I want to see how the learning stability varies
+# I will seed each run by its trial number, for reproducibility 
+
+
 import gym
 import time
 import numpy as np
@@ -5,12 +10,9 @@ import matplotlib.pyplot as plt
 from agent import Agent
 
 
-def train(par):
-    """ There are other hyperparameters, but I'll just 
-        look at these for now.
-    """
+def train(seed):
 
-    gamma,lr,tau = par
+    gamma,lr,tau = 0.99, 0.0001, 0.001
 
     #Environment
     env = gym.make('MountainCarContinuous-v0')
@@ -19,7 +21,7 @@ def train(par):
     num_actions = env.action_space.shape[0]
 
     #Agent
-    agent = Agent(num_states, num_actions, lr, gamma)
+    agent = Agent(num_states, num_actions, lr, gamma, seed_num = seed)
     agent.memory_size = 10**4
     agent.batchsize = 256
     learning_start = 25*agent.batchsize
@@ -58,7 +60,7 @@ def train(par):
     #Print results
     #I'll assess performace as the mean of the last 100 episodes
     cutoff = EPISODES / 2
-    string =  '(gamma, lr, tau, score) = ' + str((gamma, lr, tau, np.mean(scores[cutoff:])))
+    string =  '(gamma, lr, tau, seed,score) = ' + str((gamma, lr, tau, seed, np.mean(scores[cutoff:])))
     t2 = time.time()
     print string
     print 'took ' + str( (t2-t1)/60.0 ) + ' mins \n'
@@ -69,7 +71,8 @@ def train(par):
     plt.xlabel('episode', fontsize=18)
     plt.ylabel('score', fontsize=18)
     plt.title('(gamma,lr,tau) = ' + str((gamma,lr,tau)))
-    filename = 'stats/gamma_' + str(gamma) + '_lr_' + str(lr) + '_tau_' + str(tau) +  '.png'
+    filename = 'stats/gamma_' + str(gamma) + '_lr_' + str(lr) + '_tau_' + str(tau)
+    filename = filename + '_trial_' + str(seed) + '.png'
     plt.savefig(filename)
    
     #Save the target_networks
@@ -77,22 +80,15 @@ def train(par):
 
     return string
     
-################################### Main hyperparameter loop ##############################################################
+################################### Main loop ##############################################################
 
 
-#par = (0.1, 0.001, 0.01)
-#train(par)
 
-
-gammas = [0.1,0.99]
-lrs = [0.0001, 0.001, 0.01]
-taus = [0.001, 0.01, 0.1]
-pars = [(g,lr,tau) for g in gammas for lr in lrs for tau in taus ]
-
-print len(pars)
+num_trials = 15
+seeds = range(num_trials)
 
 from multiprocessing import Pool
-workers = Pool(6)
-results = workers.map(train,pars)
-np.savetxt('stats/hyperpar_results.txt',results,fmt="%s")
+workers = Pool(5)
+results = workers.map(train,seeds)
+np.savetxt('stats/ensemble_specific_parameters.txt',results,fmt="%s")
 

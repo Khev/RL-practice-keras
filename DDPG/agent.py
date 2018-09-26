@@ -1,12 +1,15 @@
 import numpy as np
 import tensorflow as tf
 import random
+import os
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam 
 from keras.optimizers import RMSprop
 from keras import backend as K
 from keras.utils import to_categorical
+from tensorflow import set_random_seed
+from numpy.random import seed
 
 #Sub classes
 from actor import Actor
@@ -15,7 +18,7 @@ from critic import Critic
 
 class Agent:
        
-    def __init__(self,input_dim, output_dim, lr, gamma):
+    def __init__(self,input_dim, output_dim, lr, gamma, seed_num = False):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.actions = range(output_dim)  
@@ -32,6 +35,11 @@ class Agent:
         self.actor = Actor(input_dim,output_dim,self.lr)
         self.critic = Critic(input_dim,output_dim, self.lr, self.gamma)
         
+        if seed != False:
+            set_random_seed(seed_num)  #seed tensorflow
+            seed(seed_num)             #seed numpy
+
+
         
     def remember(self, state, action, reward, next_state, done):
         event = (state,action,reward, next_state, done)
@@ -95,5 +103,56 @@ class Agent:
             ctr += 1
 
         net.target_model.set_weights(pars_target)
+        
+        
+    def save_target_weights(self):
+
+        """ Saves the weights of the target 
+            network (only use the target during
+            testing, so don't need to save tje
+            behavior)
+        """
+
+        #Create directory if it doesn't exist
+        dir_name = 'network_weights/'
+        if not os.path.exists(os.path.dirname(dir_name)):
+            os.makedirs(os.path.dirname(dir_name))
+
+        #Now save the weights. I'm choosing ID by gamma, lr, tau
+        pars_tag = '_gamma_' + str(self.gamma) + '_lr_' + str(self.lr) + '_tau_' + str(self.tau)  #save attached the extension
+
+        #Actor target network
+        filename = 'network_weights/actor_target'
+        actor_pars = self.actor.target_model.get_weights()
+        np.save(filename + pars_tag, actor_pars)
+
+        #Critic target network
+        filename = 'network_weights/critic_target'
+        critic_pars = self.critic.target_model.get_weights()
+        np.save(filename + pars_tag, critic_pars)
+
+
+
+
+    def load_target_weights(self, gamma,lr,tau):
+
+        """ Loads the weights of the target 
+            network, previously created using
+            the save_target_wieghts() function
+        """
+
+
+        #Now save the weights. I'm choosing ID by gamma, lr, tau
+        pars_tag = '_gamma_' + str(gamma) + '_lr_' + str(lr) + '_tau_' + str(tau) +'.npy'
+
+        #Actor target network
+        filename = 'network_weights/actor_target'
+        actor_pars = np.load(filename + pars_tag)
+        self.actor.target_model.set_weights(actor_pars)
+
+        #Critic target network
+        filename = 'network_weights/critic_target'
+        critic_pars = np.load(filename + pars_tag)
+        self.critic.target_model.set_weights(critic_pars)
                  
 
