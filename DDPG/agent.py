@@ -119,7 +119,11 @@ class Agent:
             os.makedirs(os.path.dirname(dir_name))
 
         #Now save the weights. I'm choosing ID by gamma, lr, tau
-        pars_tag = '_gamma_' + str(self.gamma) + '_lr_' + str(self.lr) + '_tau_' + str(self.tau)  #save attached the extension
+        if self.seed_num == False:
+            pars_tag = '_gamma_' + str(self.gamma) + '_lr_' + str(self.lr) + '_tau_' + str(self.tau)
+        else:
+            pars_tag = '_gamma_' + str(self.gamma) + '_lr_' + str(self.lr) + '_tau_' + str(self.tau)+'_seed_' + str(seed_num)
+            
 
         #Actor target network
         filename = 'network_weights/actor_target'
@@ -143,7 +147,11 @@ class Agent:
 
 
         #Now save the weights. I'm choosing ID by gamma, lr, tau
-        pars_tag = '_gamma_' + str(gamma) + '_lr_' + str(lr) + '_tau_' + str(tau) +'.npy'
+        #Now save the weights. I'm choosing ID by gamma, lr, tau
+        if self.seed_num == False:
+            pars_tag = '_gamma_' + str(self.gamma)+'_lr_'+str(self.lr)+'_tau_' + str(self.tau) + '.npy'
+        else:
+            pars_tag = '_gamma_' + str(self.gamma)+'_lr_'+str(self.lr)+'_tau_'+str(self.tau)+'_seed_' +str(seed_num)+ '.npy'
 
         #Actor target network
         filename = 'network_weights/actor_target'

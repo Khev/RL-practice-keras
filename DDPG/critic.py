@@ -31,7 +31,7 @@ class Critic:
         """ Q(s,a) -- so two arguments. I'll concatenate
             the s and a vectors. I'll use the 'Input' 
             formalism for models here, as opposed to the
-            Sequential one I did.
+            Sequential one I used elsewhere.
         """
         
         state = Input(shape=(self.input_dim,))
