@@ -25,6 +25,7 @@ class Agent:
         self.lr = lr
         self.gamma = gamma
         self.tau = 0.1
+        self.seed_num = seed_num
         
         #For experience replay
         self.memory = []
@@ -35,7 +36,7 @@ class Agent:
         self.actor = Actor(input_dim,output_dim,self.lr)
         self.critic = Critic(input_dim,output_dim, self.lr, self.gamma)
         
-        if seed != False:
+        if seed_num != False:
             set_random_seed(seed_num)  #seed tensorflow
             seed(seed_num)             #seed numpy
 
@@ -122,7 +123,8 @@ class Agent:
         if self.seed_num == False:
             pars_tag = '_gamma_' + str(self.gamma) + '_lr_' + str(self.lr) + '_tau_' + str(self.tau)
         else:
-            pars_tag = '_gamma_' + str(self.gamma) + '_lr_' + str(self.lr) + '_tau_' + str(self.tau)+'_seed_' + str(seed_num)
+            pars_tag = '_gamma_' + str(self.gamma) + '_lr_' + str(self.lr) + '_tau_' + str(self.tau) \
+            +'_seed_' + str(self.seed_num)
             
 
         #Actor target network
