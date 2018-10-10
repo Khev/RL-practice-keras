@@ -2,3 +2,5 @@ Deterministic policy gradients are for continuous action spaces. You can however
 action spaces using the "softmax gumbel trick" -- see paper below. Here, I'm trying this out. 
 
 https://arxiv.org/pdf/1611.01144.pdf
+
+I have NOT implemented this yet

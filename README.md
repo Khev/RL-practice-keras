@@ -26,8 +26,8 @@ itself).
 
 ### Multi-agent
 
-- [] Muti-agent deep deterministic policy gradient (MADDPG) 
-- [] Actor-Attention-Critic (AAC)
+- [ ] Muti-agent deep deterministic policy gradient (MADDPG) 
+- [ ] Actor-Attention-Critic (AAC)
 
 ##  Resources
 
