@@ -19,8 +19,8 @@ itself).
 ### Policy based methods
 
 - [x] Policy gradient -- REINFORCE & with baseline.
-- [ ] Actor critic (A2C)
-- [ ] Deep Deterministic Policy Gradient (DDPG)
+- [x] Actor critic (A2C)
+- [x] Deep Deterministic Policy Gradient (DDPG)
 - [ ] Proximal policy optimization (PPO)
 
 

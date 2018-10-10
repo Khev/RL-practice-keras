@@ -149,11 +149,11 @@ class Agent:
 
 
         #Now save the weights. I'm choosing ID by gamma, lr, tau
+        #Now save the weights. I'm choosing ID by gamma, lr, tau
         if self.seed_num == False:
             pars_tag = '_gamma_' + str(self.gamma)+'_lr_'+str(self.lr)+'_tau_' + str(self.tau) + '.npy'
         else:
-            pars_tag = '_gamma_' + str(self.gamma)+'_lr_'+str(self.lr)+'_tau_'+str(self.tau)+'_seed_' \
-            +str(self.seed_num)+ '.npy'
+            pars_tag = '_gamma_' + str(self.gamma)+'_lr_'+str(self.lr)+'_tau_'+str(self.tau)+'_seed_' +str(self.seed_num)+ '.npy'
 
         #Actor target network
         filename = 'network_weights/actor_target'

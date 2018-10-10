@@ -12,13 +12,21 @@ from keras.utils import to_categorical
 
 
 class Actor:
+    
     """ Actor for A2C """
     
-    def __init__(self,input_dim, output_dim,lr):
+    def __init__(self,input_dim, output_dim,lr, gamma, tau, clipnorm, verbose = False):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.model = self._make_network()
+        self.target_model = self._make_network()    #we have target networks to stabilize learning.
+        self.target_model.set_weights(self.model.get_weights())         #clone the network
         self.lr = lr  #learning rate for optimizer
+        self.gamma = gamma
+        self.tau = tau
+        self.clipnorm = clipnorm
+        self.verbose = verbose
+        self.opt = self.optimizer()
         
         
     def _make_network(self):
@@ -29,50 +37,51 @@ class Actor:
     
         # Neural Net -- these were the states I originally used (as opposed to the one above, which was from the external code)
         model = Sequential()
-        model.add(Dense(10, input_dim=self.input_dim, activation='relu'))
-        model.add(Dense(10, activation='relu'))
-        model.add(Dense(10, activation='relu'))
+        model.add(Dense(64, input_dim=self.input_dim, activation='relu'))
+        model.add(Dense(64, activation='relu'))
         model.add(Dense(self.output_dim, activation='softmax'))
         return model
     
     
+    def learn(self,S,Q):
+        self.opt([S,Q])
+    
+    
     def optimizer(self):
-        """ The actor loss: mean_t ( log(pi(s_t,a_t)) * A_t ), 
         
-            where A_t = advantage,  A_t = G_t - V(s_t), G_t 
-          
-            where V(s) = value of state
-            and G_t = discounted return at time t
+        """ Loss =  Q(s,a) * grad_(theta) ln( \pi(s,a) )
         
-            Following (Cf. https://arxiv.org/abs/1602.01783), we add an entropy
-            term to the loss, to encourage exploration. 
+            where
+            s = state
+            a = action
+            \pi(s,a) = the policy (actor)
+            Q(s,a) = the Q-value, from the critic
         """
         
-        #Place holders (think of these as function inputs)
-        state_placeholder = self.model.input
-        all_probs_placeholder = self.model.output
-        actions_onehot_placeholder = K.placeholder(name='actions_onehot',shape=(None,self.output_dim))
-        advantage_placeholder = K.placeholder(name='discounted_return',shape=(None,))
+        # taken from https://github.com/germain-hug/Deep-RL-Keras/blob/master/DDPG/actor.py
+        # I believe this is a work around to get keras to learn **given a gradient**
+        # As opposed to bunch of x_train, y_trains?
         
-        #Find log-probs
-        action_probs = K.sum(actions_onehot_placeholder*all_probs_placeholder ,axis=1)  #get prob for specific action
-        log_probs = K.log(action_probs) 
-        
-        #I want to the gradient to by on the log(pi) only, so 'protect' the advantage
-        # This is the way keras works -- I think!
-        eligibility = log_probs*K.stop_gradient(advantage_placeholder)
-        
-        #Add in entropy -- see (Cf. https://arxiv.org/abs/1602.01783)
-        entropy = K.sum(self.model.output * K.log(self.model.output + 1e-10), axis=1)
-
-
-        loss = 0.001*entropy - K.mean(eligibility)
-        
-        #Define optimizer
-        adam = Adam()
+        #Inputs
+        state_pl = self.model.input
+        Q_pl = K.placeholder(shape=(None,1))  
+                                        
+        #Find grad log( pi )
+        pi_pl = self.model.output
         pars = self.model.trainable_weights
-        updates = adam.get_updates(params=pars,loss=loss)
-    
-        #Then return
-        return K.function([state_placeholder, actions_onehot_placeholder, advantage_placeholder],[],updates=
-                         updates)
+        grads = tf.gradients(pi_pl, pars, -Q_pl)   #scalar multiply by the Q
+        
+        #grads_and_pars = zip(pars_grad_mu, pars)  #keras needs this form
+        #updates = tf.train.AdamOptimizer(self.lr).apply_gradients(grads_and_pars)
+
+        # The gradients as defined above work on my mac, but not ubuntu.
+        # Below I am trying a workaround. I changed the keras source code 
+        # To get this working. Specifically, I make the optimizer.get_updates()
+        # function accept custom gradients. It was easy to do.
+        
+        opt = Adam(self.lr)
+        loss = grads  #placeholder, I won't use it
+        updates = opt.get_updates(loss = grads, params = pars, grads = grads)
+
+        return K.function(inputs = [state_pl, Q_pl], outputs = [], updates = updates)
+        #return K.function(inputs = [state_pl, action_graQ_plds_pl], outputs = [updates])
