@@ -5,7 +5,6 @@ from keras.models import Sequential, Model
 from keras.layers import Input, Dense, Reshape, LSTM, Lambda, BatchNormalization, GaussianNoise, Flatten
 from keras import backend as K
 from keras.optimizers import Adam 
-from functools import partial
 
 
 
@@ -30,22 +29,14 @@ class Actor:
         activation for continuous control. We add parameter noise to encourage
         exploration, and balance it with Layer Normalization.
         """
-        
-        #Placeholders
-        #init = tf.contrib.layers.variance_scaling_initializer()
-        #reg = tf.contrib.layers.l2_regularizer(0.1)
-        
-        #Main net
         inp = Input(shape = (self.input_dim,))
-        x = Dense(32, activation='elu')(inp)
-        #x = GaussianNoise(5.0)(x)
+        x = Dense(256, activation='relu')(inp)
+        x = GaussianNoise(1.0)(x)
         #x = Flatten()(x)   # I assume this is if the input is a convolutional neural net?
-        x = Dense(64, activation='elu')(x)
-        #x = GaussianNoise(5.0)(x)
-        out = Dense(self.output_dim, activation='elu')(x)
-        #out = Lambda(lambda i: i * self.act_range)(out)
-        
-        
+        x = Dense(128, activation='relu')(x)
+        x = GaussianNoise(1.0)(x)
+        out = Dense(self.output_dim, activation='tanh', kernel_initializer=RandomUniform())(x)
+        out = Lambda(lambda i: i * self.act_range)(out)
         return Model(inp, out)
     
     

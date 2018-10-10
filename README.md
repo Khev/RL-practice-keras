@@ -16,6 +16,7 @@ itself).
 - [ ] Double Deep Q-network (DDQN)  
 - [ ] Distributional bellman
 
+
 ### Policy based methods
 
 - [x] Policy gradient -- REINFORCE & with baseline.
