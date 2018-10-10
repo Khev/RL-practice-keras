@@ -34,13 +34,19 @@ class Critic:
             Sequential one I used elsewhere.
         """
         
+        #Placeholders
+        init = tf.contrib.layers.variance_scaling_initializer()  #don't know what these do
+        reg = tf.contrib.layers.l2_regularizer(0.1)
+        
+        #Main net
         state = Input(shape=(self.input_dim,))
         action = Input(shape=(self.output_dim,))
         
-        #Define with state first
-        x = Dense(256, activation = 'relu')(state)
-        x = concatenate([x,action])
-        x = Dense(128, activation = 'relu')(x)
+        #Two stream input
+        x1 = Dense(32, activation = 'elu', kernel_initializer=init, kernel_regularizer=reg)(state)
+        x2 = Dense(32, activation = 'elu', kernel_initializer=init, kernel_regularizer=reg)(action)
+        x = concatenate([x1,x2],axis=1)
+        x = Dense(128, activation = 'relu', kernel_initializer=init, kernel_regularizer=reg)(x)
         out = Dense(1, activation = 'linear')(x)
         model = Model(inputs = [state,action], outputs = out)
         model.compile(loss='mse',optimizer=Adam(self.lr))
@@ -50,7 +56,7 @@ class Critic:
     def _make_gradient_function(self):   
         
         #Inputs
-        state_pl = self.model.input[0]     #pl = placeholder, these are inputs in the keras functional API
+        state_pl = self.model.input[0]   #pl = placeholder, these are inputs in the keras functional API
         action_pl = self.model.input[1]
         
         #Outputs

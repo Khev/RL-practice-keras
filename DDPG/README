@@ -1,5 +1,22 @@
+<<<<<<< HEAD
 1. Mountain car is hard to solve!
 2. I'm running a hyperparameter search --  hopefully that should do it.
 3. Note, I need to encourage good exploration.
 4. One way to do this is to an an entropy term to the loss fuction, which  I have NOT done yet.
 
+=======
+NOTES
+1. I haven't been able to get the same code working on mac and ubuntu.
+2. So for now, I comment out different code blocks in 'actor.py'
+3. Must fix this soon.
+
+
+LOG
+1. I believe I have the code working correctly.
+2. But solving the enviroment (continuous mountaincar) is hard!
+3. I want to solve it before moving on, so that I'm sure my code works.
+4. So, I'm doing a hyperparameter search.
+5. I should really test the other environments -- like inverted pendulum -- as
+well.
+6. Or indeed, my clever oscillators :-)
+>>>>>>> 232a4617a706dc523956ab40d0d0a2d08a529f3f

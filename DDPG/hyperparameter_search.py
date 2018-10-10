@@ -1,3 +1,9 @@
+### I believe I have to really enhance the exploration
+### at the start to get good results. These are controlled
+### By batchsize, warm-up, and noise strength. So I will
+### Vary these
+
+
 import gym
 import time
 import numpy as np
@@ -5,15 +11,6 @@ import matplotlib.pyplot as plt
 from agent import Agent
 
 
-<<<<<<< HEAD
-def train(par):
-    """ There are other hyperparameters, but I'll just 
-        look at these for now.
-    """
-
-    gamma,lr,tau = par
-
-=======
 
 def noisy_action(action):
     theta = 0.15
@@ -23,12 +20,13 @@ def noisy_action(action):
     return noisy_action
 
 
-def train():
+def train(pars):
     """ There are other hyperparameters, but I'll just 
         look at these for now.
     """
     
->>>>>>> 232a4617a706dc523956ab40d0d0a2d08a529f3f
+    batchsize, warmup, memory_size = pars
+    
     #Environment
     env = gym.make('MountainCarContinuous-v0')
     env.seed(1)  # for comparison
@@ -36,17 +34,17 @@ def train():
     num_actions = env.action_space.shape[0]
 
     #Agent
-    lr = 0.01
+    lr = 0.001
     gamma = 0.99
     agent = Agent(num_states, num_actions, lr, gamma)
-    agent.memory_size = 10**4
-    agent.batchsize = 256
-    learning_start = 3*agent.batchsize
+    agent.memory_size = memory_size
+    agent.batchsize = batchsize
+    learning_start = warmup
     agent.tau = 0.001
     
     #Train
-    EPISODES = 30
-    MAX_STEPS = 500
+    EPISODES = 100
+    MAX_STEPS = 1000
     scores = []
     t1 = time.time()
     for e in range(1,EPISODES+1):
@@ -84,56 +82,40 @@ def train():
         scores.append(reward_sum)
         t2 = time.time()
         x_max, x_min = np.round(x_max,2), np.round(x_min, 2)
-        if e % 1 == 0:
-            print '(episode, score, steps, T (mins)) = ' +str((e,int(reward_sum),steps,int((t2-t1)/60.0)))
-            print("x_max = %.2f" % round(x_max,2))
-            print("x_min = %.2f" % round(x_min,2))
-            print("amplitude = %.2f" % round(x_max-x_min,2))
-            print '\n'
+   
+        #print("x_max = %.2f" % round(x_max,2))
+        #print("x_min = %.2f" % round(x_min,2))
+        #print("amplitude = %.2f" % round(x_max-x_min,2))
+        #print '\n'
 
         
     #Print results
     #I'll assess performace as the mean of the last 100 episodes
     cutoff = EPISODES / 2
-    string =  '(gamma, lr, tau, score) = ' + str((gamma, lr, tau, np.mean(scores[cutoff:])))
+    string =  '(batchsize, warmup, memory_size, mean_score) = ' + str((batchsize,warmup,memory_size,
+                                                             np.mean(scores[cutoff:])))
     t2 = time.time()
-    print string
-    print 'took ' + str( (t2-t1)/60.0 ) + ' mins \n'
-    
-    #save figure
-    plt.figure(figsize=(9,6))
-    plt.plot(scores)
-    plt.xlabel('episode', fontsize=18)
-    plt.ylabel('score', fontsize=18)
-    plt.title('(gamma,lr,tau) = ' + str((gamma,lr,tau)))
-    filename = 'stats/gamma_' + str(gamma) + '_lr_' + str(lr) + '_tau_' + str(tau) +  '.png'
-    plt.savefig(filename)
-   
-    #Save the target_networks
-    agent.save_target_weights()
-
+    #print string
+    #print 'took ' + str( (t2-t1)/60.0 ) + ' mins \n'
     return string
+    
+    
     
 ################################### Main hyperparameter loop ##############################################################
 
-<<<<<<< HEAD
-
-#par = (0.1, 0.001, 0.01)
-#train(par)
-
-
-gammas = [0.1,0.99]
-lrs = [0.0001, 0.001, 0.01]
-taus = [0.001, 0.01, 0.1]
-pars = [(g,lr,tau) for g in gammas for lr in lrs for tau in taus ]
-
+batches = [10,100,500]
+warmups = [10**2, 10**3]
+memory_sizes = [10**4,10**5,10**6]
+pars = [(b,w,m) for b in batches for w in warmups for m in memory_sizes]
 print len(pars)
 
 from multiprocessing import Pool
 workers = Pool(6)
 results = workers.map(train,pars)
-np.savetxt('stats/hyperpar_results.txt',results,fmt="%s")
+workers.close()
+workers.join()
 
-=======
-train()
->>>>>>> 232a4617a706dc523956ab40d0d0a2d08a529f3f
+for result in results:
+    print result
+    
+np.savetxt('hyperpar_search.txt',results,fmt='%s')
