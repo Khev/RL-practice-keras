@@ -27,7 +27,7 @@ itself).
 ### Multi-agent
 
 - [] Muti-agent deep deterministic policy gradient (MADDPG) 
-
+- [] Actor-Attention-Critic (AAC)
 
 ##  Resources
 
@@ -40,6 +40,7 @@ itself).
 - [Distriubtional Bellman](https://flyyufelix.github.io/2017/10/24/distributional-bellman.html)
 - [DDPG](http://proceedings.mlr.press/v32/silver14.pdf)
 - [MADDPG](https://arxiv.org/abs/1706.02275)
+- [AAC](https://arxiv.org/abs/1810.02912)
 
 ### Blogs
 - [Arthur
