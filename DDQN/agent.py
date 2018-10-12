@@ -1,8 +1,7 @@
-""" DQN Agent -- implemented following https://www.nature.com/articles/nature14236 
-                (mainly, I do soft-updates to the target network, instead of hard updates )
+""" DQN Agent -- implemented following https://www.nature.com/articles/nature14236
     
     with (a) experience replay
-         (b) target network
+         (b) target network, which I update every C timesteps
          
     I have NOT done gradient clipping, or reward scaling.
 """
@@ -103,13 +102,17 @@ class Agent:
             if done == True:
                 Q_want[action] = reward
             
-            # Q_want(action) = reward + gamma*Q_target(next_state)  -- note I sample from the target network
+            # Q_want(action) = reward + gamma*max_a Q_target(next_state, a*)  -- note I sample from the target network
+            # where a* = argmax Q(next_state,a)
+            # Doing this -- i.e. finding a* from the behavior network, is what 
+            # distinguihses DDQN from DQN
             else:
                 next_state_tensor = np.reshape(next_state,(1,len(next_state)))  
-
+                Q_next_state_vec = self.model.predict(next_state_tensor)
+                action_max = np.argmax(Q_next_state_vec)
                 
                 Q_target_next_state_vec = self.target_model.predict(next_state_tensor)[0]
-                Q_target_next_state_max = max(Q_target_next_state_vec)
+                Q_target_next_state_max = Q_target_next_state_vec[action_max]
                 
                 Q_want[action] = reward + self.gamma*Q_target_next_state_max
                 Q_want_tensor = np.reshape(Q_want,(1,len(Q_want)))
