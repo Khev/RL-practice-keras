@@ -1,6 +1,12 @@
 Deterministic policy gradients are for continuous action spaces. You can however map onto discrete
 action spaces using the "softmax gumbel trick" -- see paper below. Here, I'm trying this out. 
 
-https://arxiv.org/pdf/1611.01144.pdf
+Honestly, I'm a little confused by this whole approach, since by adding in the softmax gumbel noise,
+you're making the policy probabilistic.... (I guess with parameter noise its probabilistic too).
+Must do some more reading about this. The blog at the link below is helpful.
+
+https://arxiv.org/pdf/1611.01144.pdfi
+
+http://amid.fish/humble-gumbel
 
 I have NOT implemented this yet

@@ -50,9 +50,14 @@ class Agent:
             self.memory[0] = event
          
 
-    def act(self, state):        
-        action =  self.actor.model.predict(state)[0]
-        return action
+    def act(self, state):
+        
+        #The softmax gumbel trick outputs an almost 1-hot vector (i.e elements sum to one, with way way bigger than others)
+        #I need to turn this into a 'hard' onehot vector
+        action_soft_onehot =  self.actor.model.predict(state)[0]
+        action_index = np.argmax(action_soft_onehot)
+        action_hard_onehot = np.array([1 if i == action_index else 0 for i in range(len(action_soft_onehot))])
+        return action_hard_onehot
                 
         
     def extract_from_batch(self,batch):
@@ -153,7 +158,8 @@ class Agent:
         if self.seed_num == False:
             pars_tag = '_gamma_' + str(self.gamma)+'_lr_'+str(self.lr)+'_tau_' + str(self.tau) + '.npy'
         else:
-            pars_tag = '_gamma_' + str(self.gamma)+'_lr_'+str(self.lr)+'_tau_'+str(self.tau)+'_seed_' +str(self.seed_num)+ '.npy'
+            pars_tag = '_gamma_' + str(self.gamma)+'_lr_'+str(self.lr)+'_tau_'+str(self.tau)+'_seed_' \
+            +str(self.seed_num)+ '.npy'
 
         #Actor target network
         filename = 'network_weights/actor_target'
