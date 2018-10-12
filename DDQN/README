@@ -1,0 +1,4 @@
+1.The difference between DQN and DDQN is very small, see lines ~110 in the agent.py files. It just
+amounts to choosing an action from the behavior and opposed to target network.
+
+2. I'm also trying out prioritised experience replay here; not yet finished
