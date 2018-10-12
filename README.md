@@ -4,7 +4,7 @@ Here I am implementing various RL algorithms, using python 2.7.  I will use kera
 use the OpenAI gym to test the algorithms. I list the methods below, which roughly divide into two
 categories.
 
-I took / adjusted code from various online sources, which I inexhaustively list below (and in codebase
+I took / adjusted code from various online sources, which I inexhaustively list below (and in the code
 itself).
 
 ### Value based methods
@@ -23,7 +23,7 @@ itself).
 - [x] Actor critic (A2C)
 - [x] Deep Deterministic Policy Gradient (DDPG)
 - [ ] Proximal policy optimization (PPO)
-
+- [ ] Soft Actor-Critic (soft AC)
 
 ### Multi-agent
 
@@ -36,10 +36,12 @@ itself).
 ### Papers
 - [Q-learning]()
 - [DQN](https://www.nature.com/articles/nature14236)
-- [Dueling DQN](://arxiv.org/abs/1511.06581)
+- [Dueling DQN](http://arxiv.org/abs/1511.06581)
 - [DQN with prioritized replay](https://arxiv.org/abs/1511.05952)
 - [Distriubtional Bellman](https://flyyufelix.github.io/2017/10/24/distributional-bellman.html)
-- [DDPG](http://proceedings.mlr.press/v32/silver14.pdf)
+- [PPO](http://arxiv.org/abs/1707.06347)
+- [Soft AC](https://arxiv.org/pdf/1801.01290.pdf)
+- [DDPG](https://arxiv.org/abs/1509.02971)
 - [MADDPG](https://arxiv.org/abs/1706.02275)
 - [AAC](https://arxiv.org/abs/1810.02912)
 
@@ -47,7 +49,7 @@ itself).
 - [Arthur
   Juliana](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-0-q-learning-with-tables-and-neural-networks-d195264329d0)
 - [yanpanlau](https://yanpanlau.github.io/2016/10/11/Torcs-Keras.html)
-
+- [Gumble softmax trick](http://amid.fish/humble-gumbel)
 
 ### Textbooks
 - [Sutton](http://incompleteideas.net/book/the-book-2nd.html)
