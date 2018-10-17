@@ -1,0 +1,9 @@
+Implementation of soft A2C from of https://arxiv.org/pdf/1801.01290.pdf. The basic idea is to add entropy to the loss functions of the actor and critic to encourage more exploration. The algorithm consists of three neural nets
+    
+    
+    1. An actor, \pi(s) : N_states -> N_actions  -- action probs when in state s
+    2. A critic Q(s) : N_states -> N_actions  -- Q-value of actions when is state s
+    3. A (critic?) V(s) : N_states -> 1   -- Value of being is state s
+
+
+For the loss functions, see the relevant python files
