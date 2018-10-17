@@ -30,8 +30,8 @@ class Agent:
         self.R = []
         self.S1 = []   #next state
         self.D = []
-        self.memory_size = 10**4
-        self.batchsize = 3 
+        self.memory_size = 2000
+        self.batchsize = 32 
         
         #Make actor and critic
         self.actor = Actor(input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, verbose)
@@ -81,7 +81,7 @@ class Agent:
             self.S[0] = state   
             action_onehot = to_categorical(action,self.output_dim) #optimizers use one-hot
             self.A[0] = action_onehot
-            self.R[0] = reward
+            self.R[0] = [reward]
             self.S1[0] = next_state
             self.D[0] = done
             
@@ -112,6 +112,14 @@ class Agent:
 
         vec = np.reshape(vec, (1,len(vec)))
         return vec
+    
+    
+    
+    def window_average(self,x,N):
+        """ Does a window average of size
+            N on the array x
+        """
+        return np.convolve(x, np.ones((N,))/N, mode='valid')
     
 
             

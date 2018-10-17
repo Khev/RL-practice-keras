@@ -1,12 +1,7 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import tensorflow as tf
-import gym
-from collections import deque
-from keras.models import Sequential, Model
+from keras.models import Model
 from keras.layers import Dense
 from keras.optimizers import Adam 
-from keras.optimizers import RMSprop
 from keras import backend as K
 from keras.utils import to_categorical
 from keras.layers import Dense, Input, concatenate
@@ -41,10 +36,10 @@ class CriticV:
         """ V(s) """
         
         S = Input(shape=(self.input_dim,))
-        x = Dense(128, activation = 'relu')(S)
+        x = Dense(256, activation = 'relu')(S)
+        x = Dense(256, activation = 'relu')(x)
         out = Dense(1, activation = 'linear')(x)
         model = Model(inputs = S, outputs = out)
-        model.compile(loss = 'mse', optimizer = Adam( lr = self.lr, clipnorm = self.clipnorm))
         return model
     
     

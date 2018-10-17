@@ -6,4 +6,4 @@ Implementation of soft A2C from of https://arxiv.org/pdf/1801.01290.pdf. The bas
     3. A (critic?) V(s) : N_states -> 1   -- Value of being is state s
 
 
-For the loss functions, see the relevant python files
+In contrast (?) to the usual A2C, they use experience replay.

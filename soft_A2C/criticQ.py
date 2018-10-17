@@ -1,12 +1,7 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import tensorflow as tf
-import gym
-from collections import deque
-from keras.models import Sequential, Model
+from keras.models import Model
 from keras.layers import Dense
 from keras.optimizers import Adam 
-from keras.optimizers import RMSprop
 from keras import backend as K
 from keras.utils import to_categorical
 from keras.layers import Dense, Input, concatenate
@@ -43,10 +38,10 @@ class CriticQ:
         S = Input(shape=(self.input_dim,))
         A = Input(shape=(self.output_dim,))
         x = concatenate([S,A])
-        x = Dense(128, activation = 'relu')(x)
+        x = Dense(256, activation = 'relu')(x)
+        x = Dense(256, activation = 'relu')(x)
         out = Dense(1, activation = 'linear')(x)
         model = Model(inputs = [S,A], outputs = out)
-        #model.compile(loss = 'mse', optimizer = Adam( lr = self.lr, clipnorm = self.clipnorm))
         return model
     
     
@@ -66,7 +61,7 @@ class CriticQ:
         """ 
            The gradient of the loss function L is
            
-           \grad L = \grad_pars Q (  Q(s_t, a_t) - r(s_t, a_t) + gamma* V_target(s_{t+1}) )
+           \grad L = \grad_pars Q (  Q(s_t, a_t) - r(s_t, a_t) - gamma* V_target(s_{t+1}) )
            
            where,
            r = reward
@@ -81,9 +76,9 @@ class CriticQ:
         Q_pl = self.model.output
 
         #Find term in bracket
-        V_pl = K.placeholder(shape=(None,1))
+        V_target_pl = K.placeholder(shape=(None,1))
         R_pl = K.placeholder(shape=(None,1)) 
-        temp = Q_pl - R_pl + self.gamma*V_pl
+        temp = Q_pl - R_pl - self.gamma*V_target_pl
 
         #Find gradient
         pars = self.model.trainable_weights
@@ -98,5 +93,5 @@ class CriticQ:
         updates = opt.get_updates(loss = loss, params = pars, grads = grads)
 
         #This function will apply updates when called
-        func = K.function(inputs=[S_pl,A_pl,R_pl,V_pl],outputs=[], updates = updates)
+        func = K.function(inputs=[S_pl,A_pl,R_pl,V_target_pl],outputs=[], updates = updates)
         return func
