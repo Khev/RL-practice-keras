@@ -97,4 +97,5 @@ class Critic:
         states = np.array(states)
         actions = np.array(actions)
         Q_wants = np.array(Q_wants)        
-        self.model.train_on_batch([states, actions],Q_wants)
+        loss = self.model.train_on_batch([states, actions],Q_wants)
+        #print 'critic loss = ' + str(loss)

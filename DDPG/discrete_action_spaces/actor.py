@@ -17,7 +17,7 @@ class Actor:
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.lr = lr                                            # learning rate for optimizer
-        self.gumbel_temperature = 0.25                           #parameter for the gumbel softmax trick
+        self.gumbel_temperature = 0.1                           #parameter for the gumbel softmax trick
         self.model = self._make_network()
         self.target_model = self._make_network()                # target networks to stabilize learning.
         self.target_model.set_weights(self.model.get_weights()) # clone the networks
@@ -37,10 +37,9 @@ class Actor:
         
         #Usual  2-layer MLP with parameter noise (should I leave out the parameter noise?)
         inp = Input(shape = (self.input_dim,))
-        x = Dense(256, activation='relu')(inp)
+        x = Dense(64, activation='relu')(inp)
         x = GaussianNoise(1.0)(x)
-        #x = Flatten()(x)   # I assume this is if the input is a convolutional neural net?
-        x = Dense(128, activation='relu')(x)
+        x = Dense(64, activation='relu')(x)
         x = GaussianNoise(1.0)(x)
         logits = Dense(self.output_dim, kernel_initializer=RandomUniform())(x)
         
@@ -78,8 +77,12 @@ class Actor:
                                         
         #Find grad_(pars) mu(state)
         mu_pl = self.model.output
+        #logits = self.model.layers[-4].output
+        #entropy = K.mean(logits*K.log(logits))         
+        entropy = K.sum(self.model.output * K.log(self.model.output + 1e-10), axis=1)
+        loss = 1000*entropy - mu_pl
         pars = self.model.trainable_weights
-        pars_grad_mu = tf.gradients(mu_pl, pars, -action_grads_pl)
+        pars_grad_mu = tf.gradients(loss, pars, action_grads_pl)
         
         #grads_and_pars = zip(pars_grad_mu, pars)  #keras needs this form
         #updates = tf.train.AdamOptimizer(self.lr).apply_gradients(grads_and_pars)

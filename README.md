@@ -30,6 +30,12 @@ itself).
 - [ ] Muti-agent deep deterministic policy gradient (MADDPG) 
 - [ ] Actor-Attention-Critic (AAC)
 
+
+### Others
+
+- [] Curiosity driven learning (CDL)
+- [] Rainbow (RB) 
+
 ##  Resources
 
 
@@ -44,6 +50,8 @@ itself).
 - [DDPG](https://arxiv.org/abs/1509.02971)
 - [MADDPG](https://arxiv.org/abs/1706.02275)
 - [AAC](https://arxiv.org/abs/1810.02912)
+- [CDL](https://pathak22.github.io/noreward-rl/resources/icml17.pdf)
+- [RB](https://arxiv.org/abs/1710.02298) 
 
 ### Blogs
 - [Arthur
