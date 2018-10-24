@@ -11,9 +11,9 @@ itself).
 
 - [x] Q-learning (tabular)
 - [x] Deep Q-Network (DQN)
-- [x] Dueling DQN  
+- [x] Double DQN  (DDQN) 
 - [ ] DQN with prioritised replay
-- [ ] Double Deep Q-network (DDQN)  
+- [ ] Dueling DQN (DDQN)  
 - [ ] Distributional bellman
 
 

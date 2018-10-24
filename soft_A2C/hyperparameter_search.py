@@ -71,7 +71,7 @@ def train(pars):
 
 alphas = [0.1,0.01,0.001,0.0001]
 taus = [0.1,0.01,0.001,0.0001]
-bs = [5]
+bs = [2,8,32,128,256,512]
 pars = [(a,t,b) for a in alphas for t in taus for b in bs]
 print len(pars)
 
