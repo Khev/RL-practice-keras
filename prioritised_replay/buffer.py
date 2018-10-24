@@ -1,11 +1,12 @@
 """ Buffer """
 
 import numpy as np
+from keras.utils import to_categorical
 
 
 class Buffer:
        
-    def __init__(self,memory_size,batchsize):
+    def __init__(self,output_dim,memory_size,batchsize):
         self.S = []
         self.A = []
         self.R = []
@@ -14,11 +15,11 @@ class Buffer:
         self.TD = []  #TD error
         self.batchsize = batchsize  
         self.memory_size = memory_size
+        self.output_dim = output_dim   #need this to convert action into 1-hots
                                  
                   
     def remember(self, state, action, reward, next_state, done, td_error):
         """ Add experience to buffer """
-
 
         #Add event to memory
         if len(self.S) <= self.memory_size:
@@ -66,5 +67,9 @@ class Buffer:
             TD = np.array(self.TD)[indicies]
             
         return S,A,R,S1,D,TD
+    
+    
+    def num_memories(self):
+        return len(self.S)
                   
                 

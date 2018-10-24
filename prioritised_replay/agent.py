@@ -3,7 +3,7 @@
 
 import numpy as np
 import tensorflow as tf
-import random
+from buffer import Buffer
 from keras.models import Sequential
 from keras.layers import Input, Dense
 from keras.optimizers import Adam 
@@ -22,14 +22,14 @@ class Agent:
         self.lr = lr
         self.gamma = gamma
         self.epsilon = 0.2
-        self.memory = []
-        self.batchsize = 32   #this is what google picked in their Nature paper -- copy them!
+        self.batchsize = 32  
         self.memory_size = 2000
+        self.buffer = Buffer(output_dim, self.memory_size, self.batchsize)
         
         #Make neural nets
         self.model = self._make_model()
-        self.target_model = self._make_model()      #we keep a target model which we update every K timesteps
-        self.C = 1000                               # this stabilizes learning
+        self.target_model = self._make_model()     
+        self.C = 1000                               # hard update parameter
         self.tau = 0.1                              # this is the soft update parameter -- see 'def update_target_network'                             
     
     
@@ -46,26 +46,25 @@ class Agent:
                   
     def remember(self, state, action, reward, next_state, done):
         
-        #Find TD error
+        #Find TD error:  abs(Q(s,a) - yi)
         #First find action from behavior network
-        #Q_next = self.model.predict(next_state)[0]
-        #action_next_best = argmax(Q_next)
+        Q_next = self.model.predict(self.make_tensor(next_state))[0]
+        action_next_best = np.argmax(Q_next)
 
         #Then find the yi
-        #Q_next_target = self.target_model.predict(next_state)[0]
-        #yi = reward + (1-done)*self.gamma*Q_next_target(action_next_best)
+        Q_next_target = self.target_model.predict(self.make_tensor(next_state))[0]
+        yi = reward + (1-done)*self.gamma*Q_next_target[action_next_best]
         
-        #td_error = abs(yi - Q_next)
         
-        td_error = 0
+        #Then find Q(s,a)
+        Q_vec = self.target_model.predict(self.make_tensor(state))[0]
+        action_scalar = np.argmax(Q_vec)  #actions are stored as 1 hots
+        Q = Q_vec[action_scalar]
         
-        #Then remember as usual
-        event = (state,action,reward, next_state, done, td_error)
+        #Define td_error
+        td_error = abs(yi - Q)
         
-        if len(self.memory) <= self.memory_size:
-            self.memory.append(event)
-        else:
-            self.memory[0] = event
+        self.buffer.remember(state,action,reward,next_state,done,td_error)
                   
 
     def act(self, state):
@@ -80,25 +79,21 @@ class Agent:
         return action
                   
                   
-    def replay(self):
+    def replay(self, prioritised = False):
         """ Does experience replay.
-        
-            NOT YET CORRECTED WITH PRIORITISED EXPERIENCE REPLAY
         """
         
         #grab random batch
-        if len(self.memory) < self.batchsize:
-            minibatch = self.memory
-        else:
-            minibatch = random.sample(self.memory,self.batchsize)
+        S,A,R,S1,D,TD = self.buffer.get_batch(prioritised = False)
               
         #instantiate
         states = []
         Q_wants = []
         
         #Find updates
-        for event in minibatch:
-            state,action,reward,next_state,done, x = event
+        for i in range(len(S)):
+            state,action,reward,next_state,done,td = S[i],A[i],R[i],S1[i],D[i],TD[i]
+            action = np.argmax(action)  #convert from 1-hot
             states.append(state)
             
             #Find Q_target
@@ -169,3 +164,12 @@ class Agent:
             ctr += 1
 
         self.target_model.set_weights(pars_target)
+        
+        
+        
+    def make_tensor(self,vec):
+        """ Reshapes a 1-hot vector
+            into a 1-hot tensor -- keras requires the tensor
+        """
+        
+        return np.reshape(vec, (1,len(vec)))
