@@ -8,7 +8,7 @@ from keras import backend as K
 from keras.utils import to_categorical
 
 #Sub classes
-from actor import Actor
+from actor_gumbel import Actor
 from criticQ import CriticQ
 from criticV import CriticV
 
@@ -44,6 +44,13 @@ class Agent:
         #get batch
         S,A,R,S1,D = self.get_batch()
         
+        
+        #Train actor --- the actions are evaluted from the actor
+        A_temp = self.actor.predict(S)
+        
+        self.actor.learn(S,A,Q,V_target)
+        self.soft_update_target_network(self.actor)
+        
         #Get what we need for learning
         Q = self.criticQ.model.predict([S,A])
         V_target = self.criticV.target_model.predict(S1)  #value of NEXT state
@@ -52,7 +59,6 @@ class Agent:
         Pi = np.sum(Pi_vec*A,axis=1)          #now a batch of \pi(s_t,a_t)
         Pi = np.array([[i] for i in Pi])      #reshape to np.array([[x1],[x2],[x3]]), same as Q, V_target.
   
-        
         #train actor
         self.actor.learn(S,A,Q,V_target)
         self.soft_update_target_network(self.actor)
@@ -63,10 +69,9 @@ class Agent:
         
         #train value funtion
         #Here, the actions are sampled from the current policy
-        A_current_policy = self.act(S)
         Pi_vec = self.actor.model.predict(S)
-        Pi = np.sum(Pi_vec*A_current_policy,axis=1)          #now a batch of \pi(s_t,a_t)
-        Pi = np.array([[i] for i in Pi])                     #reshape to np.array([[x1],[x2],[x3]]), same as Q, V_target.
+        Pi = np.sum(Pi_vec*A,axis=1)          #now a batch of \pi(s_t,a_t)
+        Pi = np.array([[i] for i in Pi])      #reshape to np.array([[x1],[x2],[x3]]), same as Q, V_target.
         
         self.criticV.learn(S,Q,Pi)
         self.soft_update_target_network(self.criticV)
@@ -105,10 +110,14 @@ class Agent:
     def act(self, state):
         """ Choose action according to softmax """
         
-        probs =  self.actor.model.predict(state)[0]
-        action = np.random.choice(self.actions, p=probs)
-        return action
-    
+        #The softmax gumbel trick outputs an almost 1-hot vector (i.e elements sum to one, with way way bigger than others)
+        #I need to turn this into a 'hard' onehot vector
+        
+        action_soft_onehot =  self.actor.model.predict(state)[0]
+        action_index = np.argmax(action_soft_onehot)
+        action_hard_onehot = np.array([1 if i == action_index else 0 for i in range(len(action_soft_onehot))])
+        return action_hard_onehot
+
     
     
     def make_tensor(self,vec):

@@ -82,8 +82,11 @@ class CriticQ:
 
         #Find gradient
         pars = self.model.trainable_weights
-        grads = tf.gradients(Q_pl,pars,temp)  #scalar multiply by temp
-
+        grads = tf.gradients(Q_pl,pars,-temp)  #scalar multiply by temp
+        
+        #Clip gradients
+        if self.clipnorm == True:
+            grads = tf.clip_by_global_norm(grads, 0.1)[0]            
 
         #Do learning
         #To get keras to apply updates given a custom gradients (i.e. run the above line) I had to alter the source

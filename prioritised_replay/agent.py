@@ -4,8 +4,10 @@
 import numpy as np
 import tensorflow as tf
 from buffer import Buffer
-from keras.models import Sequential
-from keras.layers import Input, Dense
+from keras.models import Sequential, Model
+from keras.layers import Input, Dense, concatenate, Lambda
+from keras.layers.convolutional import Convolution2D
+from keras.layers.core import Flatten
 from keras.optimizers import Adam 
 from keras.optimizers import RMSprop
 from keras import backend as K
@@ -27,8 +29,11 @@ class Agent:
         self.buffer = Buffer(output_dim, self.memory_size, self.batchsize)
         
         #Make neural nets
-        self.model = self._make_model()
-        self.target_model = self._make_model()     
+        #self.model = self._make_model()
+        self.model = self._make_model_atari()
+        #self.target_model = self._make_model()     
+        self.target_model = self._make_model_atari()
+        self.target_model.set_weights(self.model.get_weights()) # clone the networks
         self.C = 1000                               # hard update parameter
         self.tau = 0.1                              # this is the soft update parameter -- see 'def update_target_network'                             
     
@@ -40,6 +45,39 @@ class Agent:
         model.add( Dense(64, activation='relu') )
         model.add( Dense( self.output_dim, activation = 'linear' ))
         model.compile(loss='mse',optimizer=Adam(lr = self.lr))
+ 
+        return model
+
+
+    #Taken from https://becominghuman.ai/lets-build-an-atari-ai-part-1-dqn-df57e8ff3b26
+    def _make_model_atari(self):
+        
+        n_actions = self.output_dim
+        
+        # We assume a theano backend here, so the "channels" are first.
+        ATARI_SHAPE = (4, 105, 80)
+
+        # With the functional API we need to define the inputs.
+        frames_input = Input(ATARI_SHAPE, name='frames')
+        actions_input = Input((n_actions,), name='mask')
+
+        # Assuming that the input frames are still encoded from 0 to 255. Transforming to [0, 1].
+        normalized = Lambda(lambda x: x / 255.0)(frames_input)
+
+        conv_1 = Convolution2D(32, (3, 3), activation='relu', data_format='channels_first')(normalized)
+        conv_2 = Convolution2D(32, (3, 3), activation='relu')(conv_1)
+        # Flattening the second convolutional layer.
+        conv_flattened = Flatten()(conv_2)
+        # "The final hidden layer is fully-connected and consists of 256 rectifier units."
+        hidden = Dense(256, activation='relu')(conv_flattened)
+        # "The output layer is a fully-connected linear layer with a single output for each valid action."
+        output = Dense(n_actions)(hidden)
+        # Finally, we multiply the output by the mask!
+        #filtered_output = merge([output, actions_input], mode='mul')
+        filtered_output = concatenate([output, actions_input])
+        model = Model(input=[frames_input, actions_input], output=filtered_output)
+        optimizer = RMSprop(lr=0.00025, rho=0.95, epsilon=0.01)
+        model.compile(optimizer, loss='mse')
  
         return model
                   
