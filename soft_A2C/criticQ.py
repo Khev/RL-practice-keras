@@ -11,7 +11,7 @@ class CriticQ:
     
     """ Q-funtion for critic """
         
-    def __init__(self,input_dim,output_dim,lr,gamma,tau,alpha,clipnorm,verbose = False):
+    def __init__(self,input_dim,output_dim,lr,gamma,tau,alpha,clipnorm, clipnorm_val,verbose = False):
         
         #Pars
         self.input_dim = input_dim
@@ -22,6 +22,7 @@ class CriticQ:
         self.alpha = alpha
         self.verbose = verbose
         self.clipnorm = clipnorm
+        self.clipnorm_val = clipnorm_val
         
         #Make models
         self.model = self._make_network()
@@ -86,7 +87,7 @@ class CriticQ:
         
         #Clip gradients
         if self.clipnorm == True:
-            grads = tf.clip_by_global_norm(grads, 0.1)[0]            
+            grads = tf.clip_by_global_norm(grads,self.clipnorm_val)[0]            
 
         #Do learning
         #To get keras to apply updates given a custom gradients (i.e. run the above line) I had to alter the source

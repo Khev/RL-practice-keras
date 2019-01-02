@@ -15,7 +15,7 @@ from criticV import CriticV
 
 class Agent:
        
-    def __init__(self,input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, verbose):
+    def __init__(self,input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, clipnorm_val, verbose):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.actions = range(output_dim)  
@@ -23,6 +23,7 @@ class Agent:
         self.gamma = gamma
         self.tau = tau
         self.alpha = alpha
+        self.clipnorm_val = 1.0
         
         #Buffer for experience replay
         self.S = []
@@ -34,9 +35,9 @@ class Agent:
         self.batchsize = 32 
         
         #Make actor and critic
-        self.actor = Actor(input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, verbose)
-        self.criticQ = CriticQ(input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, verbose)
-        self.criticV = CriticV(input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, verbose)
+        self.actor = Actor(input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, clipnorm_val, verbose)
+        self.criticQ = CriticQ(input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, clipnorm_val, verbose)
+        self.criticV = CriticV(input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, clipnorm_val, verbose)
         
            
     def learn(self):

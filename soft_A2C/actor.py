@@ -8,7 +8,7 @@ from keras.utils import to_categorical
 
 class Actor:
         
-    def __init__(self,input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, verbose = False):
+    def __init__(self,input_dim, output_dim, lr, gamma, tau, alpha, clipnorm, clipnorm_val, verbose = False):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.model = self._make_network()
@@ -19,6 +19,7 @@ class Actor:
         self.tau = tau
         self.alpha = alpha
         self.clipnorm = clipnorm
+        self.clipnorm_val = clipnorm_val
         self.verbose = verbose
         self.opt = self.optimizer()
         
@@ -80,7 +81,7 @@ class Actor:
         
         #Clip gradients
         if self.clipnorm == True:
-            grads = tf.clip_by_global_norm(grads, 0.1)[0]            
+            grads = tf.clip_by_global_norm(grads,self.clipnorm_val)[0]            
 
         #Do learning
         #To get keras to apply updates given a custom gradients (i.e. run the above line) I had to alter the source

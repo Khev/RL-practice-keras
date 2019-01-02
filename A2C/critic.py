@@ -64,9 +64,7 @@ class Critic:
            s' = next state
            a' = most probable action in the next state
            
-        """
-        
-        
+        """  
 
         
         #Find a' -- the most probable action taken in the next state
@@ -84,13 +82,3 @@ class Critic:
             print 'critic loss = ' + str(loss)
             
         return 
-    
-    
-    
-    
-     def learn(self)
-         
-
-
-        
-      

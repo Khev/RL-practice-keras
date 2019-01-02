@@ -28,8 +28,8 @@ class Agent:
         self.R = []
         self.S1 = []
         self.D = []
-        self.memory_size = 10**4
-        self.batchsize = 256 
+        self.memory_size = 10**6
+        self.batchsize = 1024 
         
         #Make actor and critic
         self.actor = Actor(input_dim,output_dim,lr, gamma, tau, clipnorm, verbose)

@@ -33,6 +33,7 @@ itself).
 
 ### Others
 
+- [ ] Explore-and-go
 - [ ] Curiosity driven learning (CDL)
 - [ ] Rainbow (RB) 
 
@@ -52,13 +53,14 @@ itself).
 - [AAC](https://arxiv.org/abs/1810.02912)
 - [CDL](https://pathak22.github.io/noreward-rl/resources/icml17.pdf)
 - [RB](https://arxiv.org/abs/1710.02298) 
-
+- [EG](https://eng.uber.com/go-explore/)
 ### Blogs
 - [Arthur
   Juliana](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-0-q-learning-with-tables-and-neural-networks-d195264329d0)
 - [yanpanlau](https://yanpanlau.github.io/2016/10/11/Torcs-Keras.html)
 - [Gumble softmax trick](http://amid.fish/humble-gumbel)
 - [review_blog](https://towardsdatascience.com/advanced-reinforcement-learning-6d769f529eb3)
+- [TRPO intro](https://medium.com/@jonathan_hui/rl-trust-region-policy-optimization-trpo-explained-a6ee04eeeee9)
 
 ### Textbooks
 - [Sutton](http://incompleteideas.net/book/the-book-2nd.html)

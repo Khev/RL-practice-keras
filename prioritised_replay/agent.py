@@ -29,10 +29,10 @@ class Agent:
         self.buffer = Buffer(output_dim, self.memory_size, self.batchsize)
         
         #Make neural nets
-        #self.model = self._make_model()
-        self.model = self._make_model_atari()
-        #self.target_model = self._make_model()     
-        self.target_model = self._make_model_atari()
+        self.model = self._make_model()
+        #self.model = self._make_model_atari()
+        self.target_model = self._make_model()     
+        #self.target_model = self._make_model_atari()
         self.target_model.set_weights(self.model.get_weights()) # clone the networks
         self.C = 1000                               # hard update parameter
         self.tau = 0.1                              # this is the soft update parameter -- see 'def update_target_network'                             
@@ -122,7 +122,7 @@ class Agent:
         """
         
         #grab random batch
-        S,A,R,S1,D,TD = self.buffer.get_batch(prioritised = False)
+        S,A,R,S1,D,TD = self.buffer.get_batch(prioritised = prioritised)
               
         #instantiate
         states = []
