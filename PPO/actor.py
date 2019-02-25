@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import gym
 from collections import deque
-from keras.models import Sequential
+from keras.models import Sequential, Input, Model
 from keras.layers import Dense
 from keras.optimizers import Adam 
 from keras.optimizers import RMSprop
@@ -12,83 +12,63 @@ from keras.utils import to_categorical
 
 
 class Actor:
-    """ Actor for PPO - https://arxiv.org/pdf/1707.06347.pdf
     
-        I used code from https://github.com/FitMachineLearning/PPO-Keras/blob/master/ppo.py
-        as a reference
-    """
+    """ Actor for PPO """
     
-    def __init__(self,input_dim, output_dim,lr):
+    def __init__(self,input_dim, output_dim,lr,gamma,loss_clipping,c1):
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.model = self._make_network()
         self.lr = lr  #learning rate for optimizer
-        self.eps = 0.2  #for loss clipping
+        self.gamma = gamma
+        self.loss_clipping = loss_clipping
+        self.c1 = c1  #constant for entropy loss
+        self.num_layers = 3
+        self.hidden_dim = 20
+        self.model = self._make_network()
+        
+        #No target models for actor
+        #self.target_model = self._make_network()                # target networks to stabilize learning.
+        #self.target_model.set_weights(self.model.get_weights()) # clone the networks
+        
+        
+    def proximal_policy_optimization_loss(self,advantage,old_prediction):
+        def loss(y_true, y_pred):
+            
+            #L_{CPI}
+            prob = y_true * y_pred
+            old_prob = y_true * old_prediction
+            r = prob/(old_prob + 1e-10)
+            term1 = r * advantage
+            term2 = K.clip(r, min_value=1 - self.loss_clipping, max_value=1 + self.loss_clipping)*advantage
+            loss_CPI  = K.minimum(term1, term2)
+            
+            #L_entropy
+            loss_entropy = self.c1*(prob * K.log(prob + 1e-10))
+    
+            return -K.mean(loss_CPI + loss_entropy)
+        
+        return loss
         
         
     def _make_network(self):
-        #model = Sequential()
-        #model.add(Dense(128,input_dim=self.input_dim, activation='relu'))
-        #model.add(Dense(self.output_dim,activation='softmax'))
-        #return model
-    
-        # Neural net
-        model = Sequential()
-        model.add(Dense(10, input_dim=self.input_dim, activation='relu'))
-        model.add(Dense(10, activation='relu'))
-        model.add(Dense(10, activation='relu'))
-        model.add(Dense(self.output_dim, activation='softmax'))
+        
+        #Inputs
+        state_input = Input(shape=(self.input_dim,))
+        advantage = Input(shape=(1,))
+        old_prediction = Input(shape=(self.output_dim,))
+
+        #NN
+        x = Dense(self.hidden_dim, activation='tanh')(state_input)
+        for _ in range(self.num_layers - 1):
+            x = Dense(self.hidden_dim, activation='tanh')(x)
+
+        out_actions = Dense(self.output_dim, activation='softmax', name='output')(x)
+        
+        #I will make the model the take three inputs, state, adv, old_prediction, as
+        #as opposed to just a state. This is to make it compatible with the loss fucntion
+        model = Model(inputs=[state_input, advantage, old_prediction], outputs=[out_actions]) 
+        model.compile(optimizer=Adam(lr=self.lr),
+                      loss=[self.proximal_policy_optimization_loss(
+                          advantage=advantage,
+                          old_prediction=old_prediction)])
         return model
-    
-    
-    def optimizer(self):
-        """ The actor loss: min( r(\theta)*A_t, clip(r(\theta), (1-epsilon, 1+epsilon))*A_t ),
-  
-  
-            where r(\theta) = \pi_{\theta} / \pi_{\theta_old}
-            
-                  A_t = advantage,  A_t = G_t - V(s_t) 
-          
-            where V(s) = value of state
-            and G_t = discounted return at time t
-            and mean_t is the empirical average over a batch of experiences: mean( (S,A,R)_1, (S,A_R)_2, ... )
-            
-            Note: my actor and critic do NOT share a NN, so my loss function is different to  eq (9) in
-            the paper (exclude the L^{VF} term. )
-            
-        
-            Following (Cf. https://arxiv.org/abs/1602.01783), we add an entropy
-            term to the loss, to encourage exploration. 
-        """
-        
-        
-        #Placeholders, think of these are inputs
-        state_placeholder = self.model.input
-        pi_all_placeholder = self.model.output    # \pi for all actions 
-        pi_all_old_placeholder = self.model.output
-        actions_onehot_placeholder = K.placeholder(name='actions_onehot',shape=(None,self.output_dim))
-        advantage_placeholder = K.placeholder(name='discounted_return',shape=(None,))
-        
-        #Find terms for loss
-        pi_specific = K.sum(action_onehot_placeholder*pi_all_placeholder,axis=1)           #select \pi for the action taken
-        pi_specific_old = K.sum(action_onehot_placeholder*pi_all_old_placeholder,axis=1)
-        r = pi_specific / pi_specific_old
-        
-        term1 = r*advantage_placeholder
-        term2 = K.clip(r,min_value = 1 - self.eps, max_value= 1 + self.eps)*advantage_placeholder
-        temp = K.minimum(term1,term2)
-        
-        #Add in entropy to encourage exploration -- see (Cf. https://arxiv.org/abs/1602.01783)
-        entropy = K.sum(self.model.output * K.log(self.model.output + 1e-10), axis=1)
-        
-        loss = -( K.mean(temp) + 0.001*entropy)  #0.001 is obv arbitrary.
-        
-        
-        #Define the optimizer
-        adam = Adam()
-        pars = self.model.trainable_weights
-        updates = adam.get_updates(params=pars,loss=loss)
-        
-        #Put altogether -- this is the syntax for the keras functional API 
-        return K.function(inputs=[state_placeholder,actions_onehot_placeholder,advantage_placeholder], outputs =[],
-                         updates = updates)

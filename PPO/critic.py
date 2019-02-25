@@ -1,9 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import tensorflow as tf
-import gym
 from collections import deque
-from keras.models import Sequential
+from keras.models import Sequential, Input, Model
 from keras.layers import Dense
 from keras.optimizers import Adam 
 from keras.optimizers import RMSprop
@@ -18,25 +16,25 @@ class Critic:
     def __init__(self,input_dim, output_dim,lr):
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.model = self._make_network()
         self.lr = lr  #learning rate for optimizer
+        self.loss_clipping = 0.2
+        self.c1 = 10**(-3)  #constant for entropy loss
+        self.num_layers = 3
+        self.hidden_dim = 20
+        self.model = self._make_network()
+        
+        #No target models in PPO
+        #self.target_model = self._make_network()                # target networks to stabilize learning.
+        #self.target_model.set_weights(self.model.get_weights()) # clone the networks
+        
         
     def _make_network(self):
-        model = Sequential()
-        model.add(Dense(128,input_dim=self.input_dim, activation='relu'))
-        model.add(Dense(1,activation='linear'))
+        state_input = Input(shape=(self.input_dim,))
+        x = Dense(self.hidden_dim, activation='tanh')(state_input)
+        for _ in range(self.num_layers - 1):
+            x = Dense(self.hidden_dim, activation='tanh')(x)
+        out_value = Dense(1)(x)
+        
+        model = Model(inputs=[state_input], outputs=[out_value])
+        model.compile(optimizer=Adam(lr=self.lr), loss='mse')
         return model
-    
-    def optimizer(self):
-        """ The critic loss: mean squared error over discounted rewards """
-        
-        #Placeholders
-        discounted_returns_placeholder = K.placeholder(name='discounted_return',shape=(None,))        
-        critic_loss = K.mean(K.square(discounted_returns_placeholder - self.model.output))
-        
-        #Define optimizer
-        adam_critic = RMSprop(lr = self.lr, epsilon = 0.1, rho = 0.99)  #arbitray
-        pars = self.model.trainable_weights
-        updates = adam_critic.get_updates(params=pars,loss=critic_loss)
-        
-        return K.function([self.model.input, discounted_returns_placeholder], [], updates=updates)

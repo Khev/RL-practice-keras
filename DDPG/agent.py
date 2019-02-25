@@ -94,7 +94,7 @@ class Agent:
         Input: network = Actor or Critic class
         """
         
-        pars_behavior = net.model.get_weights()       # these have form [W1, b1, W2, b2, ..], Wi = 
+        pars_behavior = net.model.get_weights()       # these have form [W1, b1, W2, b2, ..], Wi = weigths layer i
         pars_target = net.target_model.get_weights()  # bi = biases in layer i
         
         ctr = 0
