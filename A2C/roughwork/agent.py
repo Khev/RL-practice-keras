@@ -41,18 +41,25 @@ class Agent:
         S,A,R,S1,D = self.get_batch()
             
         #Find advantage
-        G = self.find_discounted_return(R)
-        V = self.critic.model.predict(S)
-        V.resize(len(V))
-        adv = G - V
+        #G = self.find_discounted_return(R)
+        #V = self.critic.model.predict(S)
+        #V.resize(len(V))
+        #adv = G - V
+        
+        #Train critic
+        D0, R0 = np.array([[x] for x in D]), np.array([[x] for x in R])  #hack to get working for now
+        V1 = self.critic.model.predict(S1)
+        self.critic.learn(S,R0,D0,V1)
+        self.soft_update_target_network(self.critic)    
+                    
+        #Find advantage
+        V, V1 = self.critic.model.predict(S), self.critic.model.predict(S1)
+        adv = R0 + self.gamma*V1 - V
+        adv = adv.flatten()
         
         #train actor
         self.actor.learn(S,A,adv)
         self.soft_update_target_network(self.actor)
-        
-        #Train critic
-        self.critic.learn(S,G)
-        self.soft_update_target_network(self.critic)    
                     
         #Clear memory
         self.S, self.A, self.R, self.S1, self.D = [], [], [], [], []
