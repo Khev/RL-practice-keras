@@ -29,7 +29,7 @@ class Critic:
         
         #Make models
         self.model = self._make_network()
-        self.target_model = self._make_network()                       #we have target networks to stabilize learning.
+        self.target_model = self._make_network()                        #we have target networks to stabilize learning.
         self.target_model.set_weights(self.model.get_weights())         #clone the network
 
         

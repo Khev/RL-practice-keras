@@ -28,8 +28,7 @@ class Agent:
         self.R = []
         self.S1 = []
         self.D = []
-        self.memory_size = 10**6
-        self.batchsize = 1024 
+        self.memory_size = 10**3
         
         #Make actor and critic
         self.actor = Actor(input_dim,output_dim,lr, gamma, tau, clipnorm, verbose)
@@ -41,39 +40,50 @@ class Agent:
         #get batch
         S,A,R,S1,D = self.get_batch()
             
-        #train actor
-        Q = self.critic.target_model.predict([S,A])
-        self.actor.learn(S,Q)
-        self.soft_update_target_network(self.actor)
-
-        
         #train critic
-        self.critic.learn(S,A,R,S1,D,self.actor)
+        G = self.find_discounted_return(R)   #the return
+        V, V1 = self.critic.model.predict(S), self.critic.model.predict(S1)
+        self.critic.learn(S,R,V1,D,G)
+        self.soft_update_target_network(self.critic)    
+            
+        #train actor
+        #V, V1 = self.critic.model.predict(S), self.critic.model.predict(S1)
+        self.actor.learn(S,R,V,V1)
         self.soft_update_target_network(self.critic)
+        
+        #Clear memory
+        self.S, self.A, self.R, self.S1, self.D = [], [], [], [], []
+        
+        
+    def find_discounted_return(self,rewards):
+        rewards = rewards.flatten()
+        R = np.zeros_like(rewards)
+        rolling_sum = 0
+        for t in reversed(range(len(R))):
+            rolling_sum = rolling_sum*self.gamma + rewards[t]
+            R[t] = rolling_sum
+            
+        #Normalize rewards
+        R -= np.mean(R)
+        R /= np.std(R)
+            
+        return np.array(R)
 
     
     def remember(self, state, action, reward, next_state, done):
         """ Add experience to buffer """
     
-        if len(self.S) <= self.memory_size:
-            self.S.append(state)   
-            action_onehot = to_categorical(action,self.output_dim) #optimizers use one-hot
-            self.A.append(action_onehot)
-            self.R.append(reward)
-            self.S1.append(next_state)
-            self.D.append(done)
-            
-        else:
-            self.S[0] = state   
-            action_onehot = to_categorical(action,self.output_dim) #optimizers use one-hot
-            self.A[0] = action_onehot
-            self.R[0] = reward
-            self.S1[0] = next_state
-            self.D[0] = done
+        self.S.append(state)   
+        action_onehot = to_categorical(action,self.output_dim) #optimizers use one-hot
+        self.A.append(action_onehot)
+        self.R.append([reward])
+        self.S1.append(next_state)
+        self.D.append([done*1.0])
             
             
     def get_batch(self):
-        indicies = np.random.choice(range(len(self.S)),self.batchsize)
+        #indicies = np.random.choice(range(len(self.S)),self.batchsize)
+        indicies = range(len(self.S))
         S = np.array(self.S)[indicies]
         A = np.array(self.A)[indicies]
         R = np.array(self.R)[indicies]
