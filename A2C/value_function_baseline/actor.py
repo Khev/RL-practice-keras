@@ -39,7 +39,7 @@ class Actor:
     def optimizer(self):
         """ The actor loss: mean_t ( log(pi(s_t,a_t)) * A_t ), 
         
-            where A_t = advantage,  A_t = G_t - V(s_t), G_t 
+            where A_t = advantage,  A_t = G_t - V(s_t)
           
             where V(s) = value of state
             and G_t = discounted return at time t

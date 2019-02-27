@@ -40,22 +40,25 @@ class Agent:
         #get batch
         S,A,R,S1,D = self.get_batch()
             
-        #train critic
-        G = self.find_discounted_return(R)   #the return
-        self.critic.learn(S,G)
-        self.soft_update_target_network(self.critic)    
-            
+        #Find advantage
+        G = self.find_discounted_return(R)
+        V = self.critic.model.predict(S)
+        V.resize(len(V))
+        adv = G - V
+        
         #train actor
-        adv = G - self.critic.model.predict(S)
         self.actor.learn(S,A,adv)
         self.soft_update_target_network(self.actor)
         
+        #Train critic
+        self.critic.learn(S,G)
+        self.soft_update_target_network(self.critic)    
+                    
         #Clear memory
         self.S, self.A, self.R, self.S1, self.D = [], [], [], [], []
         
         
     def find_discounted_return(self,rewards):
-        rewards = rewards.flatten()
         R = np.zeros_like(rewards)
         rolling_sum = 0
         for t in reversed(range(len(R))):
@@ -66,8 +69,7 @@ class Agent:
         R -= np.mean(R)
         R /= np.std(R)
         
-        R = np.array([[i] for i in R])
-        return R
+        return np.array(R)
 
     
     def remember(self, state, action, reward, next_state, done):
@@ -76,9 +78,9 @@ class Agent:
         self.S.append(state)   
         action_onehot = to_categorical(action,self.output_dim) #optimizers use one-hot
         self.A.append(action_onehot)
-        self.R.append([reward])
+        self.R.append(reward)
         self.S1.append(next_state)
-        self.D.append([done*1.0])
+        self.D.append(done*1.0)
             
             
     def get_batch(self):

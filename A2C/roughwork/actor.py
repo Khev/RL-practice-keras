@@ -62,12 +62,12 @@ class Actor:
         #Inputs
         state_pl = self.model.input
         A_onehot_pl = K.placeholder(name='A_onehot', shape=(None,self.output_dim))
-        adv_pl = K.placeholder(name='adv', shape=(None,1))
+        adv_pl = K.placeholder(name='adv', shape=(None,))
 
         #Regular loss
         pi_pl = self.model.output  # (N_samples, out_dim)
-        pi_specific_action = K.sum(A_onehot_pl*pi_pl ,axis=1)  #(N_samples)
-        loss_regular = K.mean(K.log(pi_specific_action)*K.stop_gradient(adv_pl))  #scalar               
+        pi_specific_action = K.sum(A_onehot_pl*pi_pl, axis=1)  #(N_samples)
+        loss_regular = -K.mean(K.log(pi_specific_action)*K.stop_gradient(adv_pl))  #scalar               
         
         #Entropy loss
         loss_entropy = K.sum(self.model.output * K.log(self.model.output + 1e-10), axis=1)

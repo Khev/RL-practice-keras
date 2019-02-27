@@ -50,7 +50,11 @@ class Critic:
     
        
     def optimizer(self):
-        """ The critic loss: mean squared error over discounted rewards """
+        """ The critic loss: L_i = \sum_{batch}  ( V_i - G_i )^2 
+        
+            where G_i is the discounted reward.
+        
+        """
         
         #Placeholders
         discounted_returns_placeholder = K.placeholder(name='discounted_return',shape=(None,))        
@@ -73,7 +77,7 @@ class Critic:
             
             Where
             
-            y_i = r_i + (1-done) gamma* max( V_i(s', a') )  for non-terminal \vec{x'}
+            y_i = r_i + (1-done) gamma* V_i(s)  for non-terminal \vec{x'}
         
            And,
            
@@ -82,7 +86,27 @@ class Critic:
            s' = next state
            a' = most probable action in the next state
            
-        """  
+        """
+        
+        #Placeholders
+        S_pl = self.model.input
+        S1_pl = self.model.input
+        R_pl = K.placeholder(name='reward',shape=(None,))
+        D_pl = K.placeholder(name='done', shape=(None,))
+        
+        #Find yi
+        V1 = self.model.predict(S1)
+        Y = R_pl + (1-D_pl)*self.gamma*V1
+        
+        #Find loss
+        loss = K.mean(K.square(self.model.output - Y ))
+        
+        #Define optimizer
+        adam_critic = RMSprop(lr = self.lr, epsilon = 0.1, rho = 0.99)  #arbitray
+        pars = self.model.trainable_weights
+        updates = adam_critic.get_updates(params=pars,loss=loss)
+        
+        return K.function([S_pl, S1_pl, R_pl, D_pl], [], updates=updates)  
 
                 
         #Find yi
