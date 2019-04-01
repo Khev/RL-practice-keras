@@ -129,9 +129,7 @@ class Critic:
         V1_pl = K.placeholder(name='V1',shape=(None,))
 
         #Find yi
-        V1 = K.sqrt(K.square(V1_pl))
         Y = R_pl + (1.0-D_pl)*self.gamma*V1_pl  #1D array
-        #Y = np.array([ [i] for i in Y])
         
         #Find loss
         loss = K.mean(K.square(V_pl - Y))     #scalar
