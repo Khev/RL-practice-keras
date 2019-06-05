@@ -94,7 +94,6 @@ class PolicyAgent:
         
         #Prepare data
         A_onehot = to_categorical(A,self.num_actions)
-        discount_return = self.compute_discount_return(R)
         R_discounted = self.compute_discount_return(R)
         
         #Train
