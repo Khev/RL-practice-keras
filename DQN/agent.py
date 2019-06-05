@@ -151,10 +151,8 @@ class Agent:
         pars_behavior = self.model.get_weights()       # these have form [W1, b1, W2, b2, ..], Wi = weights of layer i
         pars_target = self.target_model.get_weights()  # bi = biases in layer i
         
-        ctr = 0
         for par_behavior,par_target in zip(pars_behavior,pars_target):
             par_target = par_target*(1-self.tau) + par_behavior*self.tau
             pars_target[ctr] = par_target
-            ctr += 1
 
         self.target_model.set_weights(pars_target)
