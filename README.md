@@ -29,7 +29,8 @@ itself).
 
 - [ ] Muti-agent deep deterministic policy gradient (MADDPG) 
 - [ ] Actor-Attention-Critic (AAC)
-
+- [ ] Value Decompostion Networks (VDN) 
+- [ ] QMIX
 
 ### Others
 
@@ -54,6 +55,10 @@ itself).
 - [CDL](https://pathak22.github.io/noreward-rl/resources/icml17.pdf)
 - [RB](https://arxiv.org/abs/1710.02298) 
 - [EG](https://eng.uber.com/go-explore/)
+- [MARL review article](https://arxiv.org/pdf/1810.05587v1.pdf) 
+- [QMIX](https://arxiv.org/abs/1803.11485)
+- [VDN](https://arxiv.org/pdf/1706.05296.pdf)
+
 ### Blogs
 - [Arthur
   Juliana](https://medium.com/emergent-future/simple-reinforcement-learning-with-tensorflow-part-0-q-learning-with-tables-and-neural-networks-d195264329d0)
