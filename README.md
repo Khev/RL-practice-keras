@@ -13,7 +13,6 @@ itself).
 - [x] Deep Q-Network (DQN)
 - [x] Double DQN  (DDQN) 
 - [ ] DQN with prioritised replay
-- [ ] Dueling DQN (DDQN)  
 - [ ] Distributional bellman
 
 
@@ -22,7 +21,7 @@ itself).
 - [x] Policy gradient -- REINFORCE & with baseline.
 - [x] Actor critic (A2C)
 - [x] Deep Deterministic Policy Gradient (DDPG)
-- [ ] Proximal policy optimization (PPO)
+- [x] Proximal policy optimization (PPO)
 - [ ] Soft Actor-Critic (soft AC)
 
 ### Multi-agent
